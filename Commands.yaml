@@ -1,0 +1,27 @@
+# 'needs' can be a single thing, or it can be an either/or, which is denoted by a forward slash.
+# if it is multiple items, it means that 
+COMMANDS:
+  general_commands: [
+    {verbs: [examine, describe], needs: [object/location], action: [describe, object/location]},
+    {verbs: [take, get, pick up, pick, retrieve], needs: [object], action: [take, object]},
+    {verbs: [drop, remove, release, let go of, unhand], needs: [object], action: [drop, object]}, 
+    {verbs: [throw, hurl, toss], needs: [object] , action: [throw, object]},
+    # use lantern
+    {verbs: [attack, hit, strike], needs: [actor, object], action: [attack, actor, object]},
+    {verbs: [go, travel, move], needs: [location/direction], action: [goto, location]},
+  ]
+  custom_commands:
+    forOBJECTS:
+      lantern: [
+        {verbs: [on, light, turn on], action: [change_state, light_on]},
+        {verbs: [off, turn off], action: [change_state, light_off]},
+      ]
+    forLOCATIONS: None
+    forACTORS: None
+
+  unprovided:
+    object: <verb> what?
+    verb: What about the <object>?
+    location: <verb> where?
+    with: What do you want to <verb> the <object> with?
+  invalid: You can't do that, sorry dude.

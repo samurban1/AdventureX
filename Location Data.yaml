@@ -1,0 +1,402 @@
+# Data Structure:
+#   The LOCATIONS dictionary contains keys of each location's reference number (0, 7, 5a, 10b)
+#   Those keys contain all the data about a location. Each location must have:
+#       Name -- not sure this will be used in the game anyways...but I just put it there.
+#       References: which the player can call a location by.
+#       Visited: times the player visited that location
+#       NARRATIVES: Dictionary of narratives, in which there is a long and (not always) short one. If no short, default to long narrative.
+#         Both the long and the short are able to have general narratives to use in general cases, and exceptions. If a location has one set
+#         narrative set regardless of the state of anything else in the game, then the narratives are simply declared with the 'long' and 'short' keys.
+#         If there are exceptions, however, then underneath the 'long' and 'short' keys will be 'general' and 'exception' keys. The general will just
+#         contain the 
+#       Moves: Going north takes you to location 5, going west takes you to location 8
+#         Certain directions can also take you to a 'block' which is an active block: you can't go somewhere because of a certain requirement,
+#         or a 'nowhere': which means you have simply reached the boundary of a specific room or of the map of the game or something.
+#     Can have:
+#       Conditions: Narratives that should be played based on either:
+#         1. A location’s state
+#         2. A player’s state
+#         3. An object’s state
+#         The state categories are lists within the conditions dictionary, and the actual states are
+#         lists within the state category lists.
+#         There will be a corresponding narrative for each state specified within the long or        
+#         short sections of NARRATIVES, the narrative will be contained within a dictionary of key
+#         corresponding to the state name.
+#      State Changes:
+intro: You open your eyes and are blinded by the ray of light coming from above.
+      You look up, and see trees all around you. Realizing that you are inside the
+      trunk of one of these trees, you try to stand up, but your legs are too weak.
+      Crawling out of the trunk, you hear rushing water, and see that to your right,
+      or east, is the edge of a cliff.
+
+warnings:
+  boundaries:
+    - Out of bounds, this location takes you nowhere.
+    - You sure you want to fall off the game? Well, you can't. Going this direction takes you nowhere;
+      you have hit a game boundary.
+    - One step further and you fall off the face of the flat earth; going this direction 
+      takes you nowhere. You have hit a game boundary.
+
+
+LOCATIONS:
+  # '0':
+  #   name: homeTrunk
+  #   references: ['home', 'trunk', 'start']
+  #   visited: 0
+  #   can_enter: always
+  #   NARRATIVES:
+  #     long: You are inside the trunk that you first woke up in -- a tree trunk with a wide entrance that allows 
+  #       you to fit inside. Nearby is the sound of rushing water, to your right, or east, is the edge of a cliff.
+  #     short: You are back in the tree trunk.
+  #   MOVES:
+  #     N: &N '1'
+  #     E: &E '3'
+  #     S: &S '5'
+  #     W: &W '7'
+  #     move_commands: [
+  #       {verbs: [exit, out, leave], direction: N},
+  #       {verbs: [behind], direction: S}
+  #     ]
+
+  # '1':
+  #   name: inFrontHome
+  #   visited: 0
+  #   can_enter: always
+  #   NARRATIVES:
+  #     long: Your home trunk is now behind you. All around you are closely-knit clusters
+  #       of trees, but to your west there seems to be a clearing of some sorts.
+  #     short: You're in front (and outside) of your home trunk.
+  #   OBJECTS:
+  #   MOVES:
+  #     N: &N boundary
+  #     E: &E '2'
+  #     S: &S '0'
+  #     W: &W '8'
+  #     move_commands: [
+  #       {verbs: [exit, out, leave], direction: N},
+  #       {verbs: [behind], direction: S}
+  #       ]
+
+  # '2':
+  #   name: cliffEdge0
+  #   visited: 0
+  #   can_enter: True
+  #   NARRATIVES:
+  #     long: You are at the edge of a cliff. Looking down, you see craggy rocks clinging
+  #       to the sides of the mountain wall, which leads down to a frothy white river.
+  #       Looking behind you, you see that a bridge is nearby, and it looks like it spans
+  #       the gap between your side of the cliff and the other.
+  #     short: You're at the edge of the cliff. A bridge is nearby.
+  #   OBJECTS:
+  #   MOVES:
+  #     N: &N boundary
+  #     E: &E '9'
+  #     S: &S '3'
+  #     W: &W '1'
+
+  # '3':
+  #   name: cliffEdge1
+  #   visited: 0
+  #   can_enter: always
+  #   NARRATIVES:
+  #     long: You are at the edge of a cliff. Looking down, you see craggy rocks clinging
+  #       to the sides of the mountain wall, which leads down to a frothy white river.
+  #       Looking behind you, you see that a bridge is nearby, and it looks like it spans
+  #       the gap between your side of the cliff and the other.
+  #     short: You are at the edge of the cliff, which leads down to a dangerous-looking
+  #       whitewater river. A bridge is nearby.
+  #   OBJECTS:
+  #   MOVES:
+  #     N: &N '2'
+  #     E: &E '9'
+  #     S: &S '4'
+  #     W: &W '0'
+
+  '4':
+    name: toBridge
+    visited: 0
+    can_enter: always
+    NARRATIVES:
+      long: You see a bridge to the east, and the sound of the rushing river below increases.
+      short: You're near the bridge to the east.
+    OBJECTS:
+    MOVES:
+      N: &N '3'
+      E: &E 4a
+      S: &S 10c
+      W: &W '5'
+
+  4a:
+    name: bridge
+    references: [bridge, overpass, walkway]
+    visited: 0
+    NARRATIVES:
+      long:
+        general: A wooden plank-bridge stretches out before you, providing a pathway across
+          the chasm. One problem, though - Yes, a troll — a short ginger-haired and brown-skinned
+          creature — stands guard in front, holding a rusty metal staff.
+        exceptions:
+          troll: [[condition: [guarding, False],
+                narrative: A wooden plank-bridge stretches out before you, providing a pathway across 
+                the chasm. It is unguarded, just waiting for a passerby to cross it.]]
+      short:
+        general: The bridge is in front of you, guarded by an ugly troll in front holding
+          a metal staff.
+        exceptions:
+          troll: [[condition: [guarding, False],
+                narrative: The bridge stretches out in front of you, unguarded.]]
+    MOVES:
+      N: &N '9'
+      E: &E 4b
+      S: &S {warning: "You sure you want to jump over the bridge? You will most definitely crack your head on a rock below.",
+            yes: 10d, no: null}
+      W: &W '4'
+    COMMANDS: [
+        {verbs: [jump, suicide], action: [goto, *S]}
+      ]
+
+  4b:
+    name: acrossBridge
+    visited: 0
+    can_enter: 
+    state_changes:
+      player: [can_walk]
+    NARRATIVES:
+      long:
+        general: You get to the other side. Yay. To be continued.
+        exceptions:
+          4b: [
+            [condition: [visited, 0],
+            narrative: Walking steadily across the wooden planks, you notice a figure at the other
+              side -- a classically bearded, tall man, robed in silver-grey folds standing
+              proud, watching you cross; almost like he is guarding the other side of the
+              bridge, as if in consortium with the troll. Reaching the other side, the man
+              brings his large hands together, and you hear a large rumble beneath the ground.
+              All goes dark.]
+          ]
+      
+      Walking steadily across the wooden planks, you notice a figure at the other
+        side -- a classically bearded, tall man, robed in silver-grey folds standing
+        proud, watching you cross; almost like he is guarding the other side of the
+        bridge, as if in consortium with the troll. Reaching the other side, the man
+        brings his large hands together, and you hear a large rumble beneath the ground.
+        All goes dark.
+      short:
+    OBJECTS:
+    MOVES:
+      N: &N boundary
+      E: &E boundary
+      S: &S boundary
+      W: &W 4a
+  '5':
+    name: behindHome
+    visited: 0
+    NARRATIVES:
+      long: You are now behind your home trunk. To your east you see a bridge in the
+        distance; a hopeful sign that you can maybe get across the accursed cliff.
+      short: You are behind your home trunk, and to the east is the bridge.
+    OBJECTS:
+    MOVES:
+      N: &N '0'
+      E: &E '4'
+      S: &S 10b
+      W: &W '6'
+  '6':
+    name: leftBehindHome
+    references: [forest, trees, woods]
+    visited: 0
+    NARRATIVES:
+      long: Just more trees. You are surrounded.
+      short:
+    OBJECTS:
+    MOVES:
+      N: &N '7'
+      E: &E '5'
+      S: &S 10a
+      W: &W 6a
+  '10':
+    name: moreTrees0
+    references: [forest, trees, woods]
+    visited: 0
+    NARRATIVES:
+      long: Just more trees. You are surrounded.
+    OBJECTS:
+    MOVES:
+      N: &N 6a
+      E: &E 10a
+      S: &S boundary
+      W: &W boundary
+  10a:
+    name: moreTrees1
+    references: [forest, trees, woods]
+    visited: 0
+    NARRATIVES:
+      long: Just more trees. You are surrounded.
+    OBJECTS:
+    MOVES:
+      N: &N '6'
+      E: &E 10b
+      S: &S No go; this is the edge of the game.
+      W: &W '10'
+  10b:
+    name: moreTrees2
+    references: [forest, trees, woods]
+    visited: 0
+    NARRATIVES:
+      long: Just more trees. You are surrounded.
+    OBJECTS:
+    MOVES:
+      N: &N '5'
+      E: &E 10c
+      S: &S boundary
+      W: &W 10a
+  10c:
+    name: moreTrees3
+    references: [forest, trees, woods]
+    visited: 0
+    NARRATIVES:
+      long: Just more trees. You are surrounded.
+    OBJECTS:
+    MOVES:
+      N: &N '4'
+      E: &E 10d
+      S: &S boundary
+      W: &W 10b
+
+  10d:
+    name: deathFall2
+    visited: 0
+    state_changes:
+      player:
+        health: 0
+    NARRATIVES:
+      long: You fall of the bridge and die.
+    MOVES:
+      N: &N null
+      E: &E null
+      S: &S null
+      W: &W null
+
+  6a:
+    name: staircase
+    references: [staircase, stairs, stair]
+    visited: 0
+    conditions:
+      player: [can_walk]
+      object: [lantern, lantern_on]
+    NARRATIVES:
+      long:
+        - All is dark. The ground feels marshy and wet, and squishes beneath
+          your hands and knees. The air is cold here. Stretching out your hands,
+          you feel cold stone.
+        - lantern_on: The ground feels marshy and wet, and squishes beneath your hands
+            and knees. By the light of your lantern, you see a stone staircase in front
+            of you.
+      short:
+        - You are back in the dark, squishy, wet area.
+        - lantern_on: You are back by the staircase with the squishy wet ground.
+    RESPONSES:
+      - {verbs: [climb, up, stairs, upwards], conditions: [can_walk],
+        responses: ["You can't climb the stairs; hell, you can't even walk! Try to do
+          that first and then come back.",
+          "Walking up the stairs, you slip a little, and you see that the steps
+          are wet with what seems to be some kind of slime. Reaching the top of the
+          staircase, you see a note."]
+            }
+    MOVES:
+      N: &N 7a
+      E: &E '6'
+      S: &S '10'
+      W: &W boundary
+
+  '7':
+    name: leftOfHome
+    visited: 0
+    NARRATIVES:
+      long: You see your home trunk to the east, and trees everywhere else you look.
+        But you see something unexpected for a forest, nearby.
+    MOVES:
+      N: &N '8'
+      E: &E '0'
+      S: &S '6'
+      W: &W 7a
+
+  7a:
+    name: toClearing0
+    visited: 0
+    NARRATIVES:
+      long: There is a clearing straight ahead, an unpredictable bald spot among the 
+        vast forest of trees.
+      short: You're back near the clearing, which is straight ahead of you.
+    MOVES:
+      N: &N 8a
+      E: &E '7'
+      S: &S 6a
+      W: &W 7b
+  
+  7b:
+    name: toClearing1
+    visited: 0
+    NARRATIVES:
+      long: You see something in the ground in a clearing among the trees ahead of you.
+    MOVES:
+      N: &N 8b
+      E: &E 7a
+      S: &S boundary
+      W: &W 7a
+    
+  '8':
+    name: toClearing2
+    visited: 0
+    NARRATIVES:
+      long: It is clear that you are upon a clearing, a dusty circle barren of vegetation 
+        or any of the trees you are so used to seeing around you.
+      short: You are near the clearing.
+    MOVES:
+      N: &N boundary
+      E: &E '1'
+      S: &S '7'
+      W: &W 8a
+
+  8a:
+    name: clearing
+    references: [clearing]
+    visited: 0
+    NARRATIVES:
+      long: You arrive in the clearing. A mysterious-looking silver egg lays in a small
+        indentation in the ground in the middle of the clearing, and a metal lantern lies next to it.
+      short: You're back in the clearing.
+    OBJECTS: [egg, lantern]
+    MOVES:
+      N: &N boundary
+      E: &E '8'
+      S: &S 7a
+      W: &W 8b
+
+  8b:
+    name: midClearing
+    visited: 0
+    NARRATIVES:
+      long: You are in the middle of the clearing with the depression in the ground.
+    OBJECTS: [egg, lantern]
+    MOVES:
+      N: &N null
+      E: &E 8a
+      S: &S null
+      W: &W null
+  '9':
+    name: deathFall
+    visited: 0
+    state_changes:
+      player:
+        health: 0
+    NARRATIVES:
+      long: You fall 2000 feet and hit your head on a boulder at the bottom. You die.
+      short:
+    OBJECTS:
+    MOVES:
+      N: &N null
+      E: &E null
+      S: &S null
+      W: &W null
+OBJECTS:
