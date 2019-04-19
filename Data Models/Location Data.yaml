@@ -10,9 +10,9 @@
 #         If there are exceptions, however, then underneath the 'long' and 'short' keys will be 'general' and 'exception' keys. The 'general' key will 
 #         contain the general long/short narrative, hence the word general. Any exceptions will go underneath the 'exception' key. Exceptions are based on an item's attribute. Items can be
 #         locations, objects, actors, or the player. The name of the item will be the key for its set of conditions and narratives. So a location's key would be '6a' for example, and the key for
-#         an object can be 'lantern'. The value under an item key is a list of lists. Each sublist is another condition/narrative set. A sublist contains a 'condition' key, which holds a list of the
+#         an object can be 'lantern'. The value under an item key is a list of lists. Each sublist is another condition/narrative set. A sublist contains a 'if' key, which holds a list of the
 #         attribute name as the first value, and the attribute value that is needed in order for the narrative based on this condition to fire. The sublist also contains a 'narrative' key, which just
-#         holds the narrative to play if the item's attribute value matches the value declared in the 'condition' key.
+#         holds the narrative to play if the item's attribute value matches the value declared in the 'if' key.
 #       MOVES: This dictionary contains N,E,S,W keys whose values are the location numbers that these directions take the player to. Instead of a location number, there are two other options:
 #         1. A warning. It is a dictionary which contains 2 keys: 'warning' and 'yes'. The 'warning' key contains the warning message/question, and the 'yes' key which contains the location to go to if the user
 #            answers positively ('yes', 'y', 'ok') to the warning question. The program will keep the user in a loop asking the warning question until the user provides either a yes-type answer or a no-type answer.
@@ -145,14 +145,16 @@ LOCATIONS:
           the chasm. One problem, though - Yes, a troll — a short ginger-haired and brown-skinned
           creature — stands guard in front, holding a rusty metal staff.
         exceptions:
-          troll: [[condition: [guarding, False],
+          troll: [
+            [if: [guarding, False],
                 narrative: A wooden plank-bridge stretches out before you, providing a pathway across 
-                the chasm. It is unguarded, just waiting for a passerby to cross it.]]
+                the chasm. It is unguarded, just waiting for a passerby to cross it.]
+                ]
       short:
         general: The bridge is in front of you, guarded by an ugly troll in front holding
           a metal staff.
         exceptions:
-          troll: [[condition: [guarding, False],
+          troll: [[if: [guarding, False],
                 narrative: The bridge stretches out in front of you, unguarded.]]
     MOVES:
       N: &N '9'
@@ -174,7 +176,7 @@ LOCATIONS:
       long:
         general: You get to the other side. Yay. To be continued.
         exceptions:
-          4b: [[condition: [visited, 0],
+          4b: [[if: [visited, 0],
             narrative: Walking steadily across the wooden planks, you notice a figure at the other
               side -- a classically bearded, tall man, robed in silver-grey folds standing
               proud, watching you cross; almost like he is guarding the other side of the

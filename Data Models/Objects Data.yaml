@@ -52,17 +52,13 @@ OBJECTS:
             True: The light turns on, but it doesn't help - it's already light here.
             False: The light turns off, but so what? It's already light here.
           exceptions:
-            troll: [
-              [condition: [guarding, False],
-              reaction: {True: The troll's power stops the light from turning on.}]
-            ]
+            troll: [[if: [guarding, True],
+              reaction: {True: The troll's power stops the light from turning on.}]]
 
-            player: [
-              [condition: [active_location, 6a],
+            player: [[if: [active_location, 6a],
               reaction: {True: 'The light turns on, and everything becomes more clear.
                                 You see a stone staircase rise up in front of you.',
-                        False: 'The light flickers off, and it becomes harder to see.'}]
-            ]
+                        False: 'The light flickers off, and it becomes harder to see.'}]]
                 
       commands:
         take: You pick up the lantern and brush off the dust covering the stained 

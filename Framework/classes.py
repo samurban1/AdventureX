@@ -10,6 +10,32 @@ import pyaml
 # Make sure for go_to, that its not 'boundary', in that case, randomly choose a boundary response
 
 
+def exceptions_handler(dictionary, typ):
+    """Handles things in which general/exception sets are declared."""
+    exceptions = dictionary['exceptions']
+    # break out of the loop below if a condition passes
+    for item in exceptions:  # item is either name of object/actor/location, or 'player'
+        for sub_exception in exceptions[item]:  # exceptions[item] contains lists of condition/reaction sets
+            condition_set = sub_exception[0]['if']  # sub_exception[0] is the dictionary, call the 'condition' key of that dictionary
+            state = condition_set[0]  # e.g. 'lit' or 'guarding'
+            condition = condition_set[1]  # e.g. True/False, 6a (location)
+
+            if item == 'player':
+                item_state = getattr(player, state)
+            else:
+                for dictionary in [LOCATIONS, OBJECTS, ACTORS]:
+                    if item in dictionary:
+                        item_state = getattr(dictionary[item], state)
+                        break
+
+            print('{} state -- {}: {}'.format(item, state, item_state))
+            if item_state == condition:
+                if typ == 'state change':
+                    return sub_exception[1]['reaction']
+                elif typ == 'narrative':
+                    return sub_exception[1]['narrative']
+
+
 class Omnipotent:
     """My class, where I figure everything out for the user and then spoon-feed it back to him."""
 
@@ -278,33 +304,12 @@ class ComplexObject(Object):
         #     print(self.sc_reactions['exceptions']
         #           [player.active_location][new_state])
 
-    def react_to_state_change(self, state, boolean):
+    def react_to_state_change(self, state_change, boolean):
         """React to a state change"""
-        exceptions = self.sc_reactions[state]['exceptions']
-        for item in exceptions:  # item is either name of object/actor/location, or 'player'
-            for exception in exceptions[item]:  # exceptions[item] contains lists of condition/reaction sets
-                condition = exception[0]['condition']
-                state = condition[0]  # e.g. 'lit' or 'guarding'
-                condition = condition[1]  # e.g. True/False, 6a (location)
-                dictionary = None
-                if item in LOCATIONS:
-                    dictionary = LOCATIONS
-                elif item in OBJECTS:
-                    dictionary = OBJECTS
-                elif item in ACTORS:
-                    dictionary = ACTORS
-                if dictionary is not None:  # meaning it is one of the things in the above if/elif statements block
-                    requirement = getattr(dictionary[item], state)
-                    print('requirement:', requirement)
-                if item == 'player':  # dictionary is still None
-                    pass
+        reaction = exceptions_handler(self.sc_reactions[state_change], 'state change')
 
-                # print()
-        #
+
         #     if exception == 'player':
-        #
-        #
-        #
         #             'location':
         #         for location in exception:
         #             if player.active_location == location:
@@ -367,28 +372,35 @@ class Location:
                     After the loop, return final, whatever final ended up being.
                If not, simply return the passed in (argument) narrative.
             """
-            if type(nars) is list:
-                for nar in nars:
-                    if type(nar) is dict:
-                        attribute = ''.join([key for key in nar.keys()])  # this will obviously always only have one value
-                        prereq = self.conditions[attribute]
-                        if prereq == 'player':
-                            if attribute in player.attributes:
-                                final = nar[attribute]
-                        elif prereq in LOCATIONS:
-                            # if the condition is for a location, in which the value would be the loc num
-                            if attribute in LOCATIONS[prereq].attributes:
-                                final = nar[attribute]
-                        # elif prereq in objects:
-                        #     if attribute in OBJECTS[prereq].attributes:
-                        #         final = nar[attribute]
-                        break  # is this bad if there are multiple dicts,
-                        # multiple attribute narratives in one long location?
-                    else:
-                        final = nar
-                return final
-            else:
+            if type(nars) is not dict:
                 return nars
+            else:
+                return exceptions_handler(nars, 'narrative')
+
+
+
+            # if type(nars) is list:
+            #     for nar in nars:
+            #         if type(nar) is dict:
+            #             attribute = ''.join([key for key in nar.keys()])  # this will obviously always only have one value
+            #             prereq = self.conditions[attribute]
+            #             if prereq == 'player':
+            #                 if attribute in player.attributes:
+            #                     final = nar[attribute]
+            #             elif prereq in LOCATIONS:
+            #                 # if the condition is for a location, in which the value would be the loc num
+            #                 if attribute in LOCATIONS[prereq].attributes:
+            #                     final = nar[attribute]
+            #             # elif prereq in objects:
+            #             #     if attribute in OBJECTS[prereq].attributes:
+            #             #         final = nar[attribute]
+            #             break  # is this bad if there are multiple dicts,
+            #             # multiple attribute narratives in one long location?
+            #         else:
+            #             final = nar
+            #     return final
+            # else:
+            #     return nars
 
         if self.visited == 0 or typ == 'long':
             print('\nprinting long in location', self.num)
@@ -502,7 +514,9 @@ actualize_data('OBJECTS', setup.obj_filename)
 actualize_data('ACTORS', setup.obj_filename)
 
 
-OBJECTS['lantern'].react_to_state_change('lit', True)
+# OBJECTS['lantern'].react_to_state_change('lit', True)
+
+exceptions_handler(LOCATIONS['4a'].narratives['long'])
 
 #
 # def react_to_state_change (self, state, boolean):
