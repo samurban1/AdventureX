@@ -1,28 +1,33 @@
 # Data Structure:
+#   Attributes (name, visited, references) are lower case  and dictionary keys (NARRATIVES, MOVES) are uppercase.
 #   The LOCATIONS dictionary contains keys of each location's reference number (0, 7, 5a, 10b)
 #   Those keys contain all the data about a location. Each location must have:
 #       Name -- not sure this will be used in the game anyways...but I just put it there.
 #       References: which the player can call a location by.
 #       Visited: times the player visited that location
 #       NARRATIVES: Dictionary of narratives, in which there is a long and (not always) short one. If no short, default to long narrative.
-#         Both the long and the short are able to have general narratives to use in general cases, and exceptions. If a location has one set
-#         narrative set regardless of the state of anything else in the game, then the narratives are simply declared with the 'long' and 'short' keys.
-#         If there are exceptions, however, then underneath the 'long' and 'short' keys will be 'general' and 'exception' keys. The general will just
-#         contain the 
-#       Moves: Going north takes you to location 5, going west takes you to location 8
-#         Certain directions can also take you to a 'block' which is an active block: you can't go somewhere because of a certain requirement,
-#         or a 'nowhere': which means you have simply reached the boundary of a specific room or of the map of the game or something.
-#     Can have:
-#       Conditions: Narratives that should be played based on either:
-#         1. A location’s state
-#         2. A player’s state
-#         3. An object’s state
-#         The state categories are lists within the conditions dictionary, and the actual states are
-#         lists within the state category lists.
-#         There will be a corresponding narrative for each state specified within the long or        
-#         short sections of NARRATIVES, the narrative will be contained within a dictionary of key
-#         corresponding to the state name.
-#      State Changes:
+#         If a location has one long(/short) narrative set regardless of the state of anything else in the game, then the narratives are simply declared with the 'long' and 'short' keys.
+#         If there are exceptions, however, then underneath the 'long' and 'short' keys will be 'general' and 'exception' keys. The 'general' key will 
+#         contain the general long/short narrative, hence the word general. Any exceptions will go underneath the 'exception' key. Exceptions are based on an item's attribute. Items can be
+#         locations, objects, actors, or the player. The name of the item will be the key for its set of conditions and narratives. So a location's key would be '6a' for example, and the key for
+#         an object can be 'lantern'. The value under an item key is a list of lists. Each sublist is another condition/narrative set. A sublist contains a 'condition' key, which holds a list of the
+#         attribute name as the first value, and the attribute value that is needed in order for the narrative based on this condition to fire. The sublist also contains a 'narrative' key, which just
+#         holds the narrative to play if the item's attribute value matches the value declared in the 'condition' key.
+#       MOVES: This dictionary contains N,E,S,W keys whose values are the location numbers that these directions take the player to. Instead of a location number, there are two other options:
+#         1. A warning. It is a dictionary which contains 2 keys: 'warning' and 'yes'. The 'warning' key contains the warning message/question, and the 'yes' key which contains the location to go to if the user
+#            answers positively ('yes', 'y', 'ok') to the warning question. The program will keep the user in a loop asking the warning question until the user provides either a yes-type answer or a no-type answer.
+#         2. A word -- but not just any word -- this word refers to a dictionary defined with this word as the key name. This dictionary cotains a list of items, and is to be used when the game creator wants to
+#            be able to print a random item from this list when the player tries to go to this location. The most prevalent example of this is a game boundary message -- it would be boring to have just one
+#            message when the user hits a boundary, so the creator can define multiple messages and the program will pick one randomly from the list within the dictionary.
+#            These items can be any data type (boolean, string, etc.) -- but in the game's case, the list will most likely contain strings -- messages for the player.
+#         The MOVES dictionary can also contain a move_commands key, which holds a list of dictionaries, in a similar format as commands are declared in within the COMMANDS.yaml file: There is a 'words' key which contains a
+#         list of the words which activate the other key, the 'direction' key. This contains either N,E,S,W, or any of the other options laid out above. The reason there is a special move_commands dictionary
+#         is to allow for a case in which the user says "go out" -- and "out" is one of the move_commands. Since "out" was declared as move command, that means that the parser will realize that any verb associated with moving
+#         that precedes the word "out", or any move_command, will not be looked at as a verb without a direction -- without this, if the parser saw "go out", it would see that the verb "go" is missing a direction, but since
+#         "out" is a move_command, it will realize that the word "go" maps to the move command. Move commands can also be used alone.
+#     Not required for a location:
+#       OBJECTS: A list of the names of the objects that the location contains. Simple. *** wipes/dusts hands clean ***
+
 intro: You open your eyes and are blinded by the ray of light coming from above.
       You look up, and see trees all around you. Realizing that you are inside the
       trunk of one of these trees, you try to stand up, but your legs are too weak.
@@ -39,6 +44,9 @@ warnings:
 
 
 LOCATIONS:
+
+####### LEVEL 1 #######
+
   # '0':
   #   name: homeTrunk
   #   references: ['home', 'trunk', 'start']
@@ -80,7 +88,7 @@ LOCATIONS:
   # '2':
   #   name: cliffEdge0
   #   visited: 0
-  #   can_enter: True
+  #   can_enter: always
   #   NARRATIVES:
   #     long: You are at the edge of a cliff. Looking down, you see craggy rocks clinging
   #       to the sides of the mountain wall, which leads down to a frothy white river.
@@ -112,23 +120,24 @@ LOCATIONS:
   #     S: &S '4'
   #     W: &W '0'
 
-  '4':
-    name: toBridge
-    visited: 0
-    can_enter: always
-    NARRATIVES:
-      long: You see a bridge to the east, and the sound of the rushing river below increases.
-      short: You're near the bridge to the east.
-    OBJECTS:
-    MOVES:
-      N: &N '3'
-      E: &E 4a
-      S: &S 10c
-      W: &W '5'
+  # '4':
+  #   name: toBridge
+  #   visited: 0
+  #   can_enter: always
+  #   NARRATIVES:
+  #     long: You see a bridge to the east, and the sound of the rushing river below increases.
+  #     short: You're near the bridge to the east.
+  #   OBJECTS:
+  #   MOVES:
+  #     N: &N '3'
+  #     E: &E 4a
+  #     S: &S 10c
+  #     W: &W '5'
 
   4a:
     name: bridge
     references: [bridge, overpass, walkway]
+    can_enter:
     visited: 0
     NARRATIVES:
       long:
@@ -165,23 +174,13 @@ LOCATIONS:
       long:
         general: You get to the other side. Yay. To be continued.
         exceptions:
-          4b: [
-            [condition: [visited, 0],
+          4b: [[condition: [visited, 0],
             narrative: Walking steadily across the wooden planks, you notice a figure at the other
               side -- a classically bearded, tall man, robed in silver-grey folds standing
               proud, watching you cross; almost like he is guarding the other side of the
               bridge, as if in consortium with the troll. Reaching the other side, the man
               brings his large hands together, and you hear a large rumble beneath the ground.
-              All goes dark.]
-          ]
-      
-      Walking steadily across the wooden planks, you notice a figure at the other
-        side -- a classically bearded, tall man, robed in silver-grey folds standing
-        proud, watching you cross; almost like he is guarding the other side of the
-        bridge, as if in consortium with the troll. Reaching the other side, the man
-        brings his large hands together, and you hear a large rumble beneath the ground.
-        All goes dark.
-      short:
+              All goes dark.]]
     OBJECTS:
     MOVES:
       N: &N boundary
@@ -399,4 +398,21 @@ LOCATIONS:
       E: &E null
       S: &S null
       W: &W null
-OBJECTS:
+
+
+####### LEVEL 2 #######
+
+  '@6b':
+    name: topOfStaircase
+    references: [top of the stairs]
+    can_enter:
+      player: [can_walk, True]
+    visited: 0
+    NARRATIVES:
+      long: You have reached the top of the stairs. Yay.
+    MOVES:
+      N: &N '9'
+      E: &E 4b
+      S: &S {warning: "You sure you want to jump over the bridge? You will most definitely crack your head on a rock below.",
+            yes: 10d, no: null}
+      W: &W '4'
