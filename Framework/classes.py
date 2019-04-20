@@ -311,16 +311,23 @@ class ComplexObject(Object):
         #           [player.active_location][new_state])
 
     def react_to_state_change(self, state, boolean):
-        """React to a state change"""
-        reaction = exceptions_handler(self.sc_reactions[state], 'state change')
-        general = self.sc_reactions[state]['general'][boolean]
-        if not reaction:
-            print(general)
-        else:
-            if not reaction.get(boolean):  # if the get() function returns None because the boolean key doesn't exist
+        """React to a state change
+        :param state: The object's state that is being changed
+        :param boolean: The boolean value that the state is being change to
+        """
+        if self.sc_reactions[state].get('general'):  # could also use 'exceptions' for this. If there is a 'general' key
+            # that means there is a general/exceptions pair.
+            reaction = exceptions_handler(self.sc_reactions[state], 'state change')
+            general = self.sc_reactions[state]['general'][boolean]
+            if not reaction:  # if none of the conditions are met and exceptions_handler() returns None
                 print(general)
             else:
-                print(reaction[boolean])
+                if not reaction.get(boolean):  # if the get() function returns None because the boolean key doesn't exist
+                    print(general)
+                else:  # if the conditions are met
+                    print(reaction[boolean])
+        else:  # if there is just one set reaction set no matter any outside state
+            print(self.sc_reactions[state][boolean])
 
     def react_to_command(self, command):
         """React to a given command."""
@@ -530,7 +537,12 @@ def test_state_changes():
     OBJECTS['lantern'].react_to_state_change('lit', True)
     print('\n---NEW---')
     player.active_location = '4a'
-    # exceptions_handler(LOCATIONS['4a'].narratives['long'], 'narrative')
+    exceptions_handler(LOCATIONS['4a'].narratives['long'], 'narrative')
+
+    print('\n---NEW---')
+    OBJECTS['test'].react_to_state_change('testing', False)
+    print('\n---NEW---')
+    OBJECTS['test'].react_to_state_change('testing', True)
 
 
 #
