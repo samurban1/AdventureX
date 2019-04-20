@@ -49,7 +49,6 @@ OBJECTS:
             True: The light turns on, but it doesn't help - it's already light here.
             False: The light turns off, but so what? It's already light here.
           exceptions: 
-            ### Ask sharfman about having two conditions that evaluate to true how to deal with that.
             - [if: [[player, active_location, 6a]],
               reaction: {True: 'The light turns on, and everything becomes more clear.
                                 You see a stone staircase rise up in front of you.',

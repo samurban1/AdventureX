@@ -145,11 +145,11 @@ LOCATIONS:
           the chasm. One problem, though - Yes, a troll — a short ginger-haired and brown-skinned
           creature — stands guard in front, holding a rusty metal staff.
         exceptions:
-          troll: [
-            [if: [guarding, False],
-                narrative: A wooden plank-bridge stretches out before you, providing a pathway across 
+          - [if: [[troll, guarding, False]],
+            narrative: A wooden plank-bridge stretches out before you, providing a pathway across 
                 the chasm. It is unguarded, just waiting for a passerby to cross it.]
-                ]
+                
+          
       short:
         general: The bridge is in front of you, guarded by an ugly troll in front holding
           a metal staff.
