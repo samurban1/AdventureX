@@ -1,7 +1,6 @@
 import setup
 from errors import *
 from nltk import pos_tag
-import pyaml
 
 # Add in documentation, that if you want to have a randomly chosen response, define your responses at the top of the document
 # or maybe in another document, so for example create a dict with key 'boundary', and then u can just write 'boundary; wherever
@@ -14,11 +13,13 @@ def exceptions_handler(dictionary, typ):
     """Handles things in which general/exception sets are declared."""
     exceptions = dictionary['exceptions']
     # break out of the loop below if a condition passes
-    for item in exceptions:  # item is either name of object/actor/location, or 'player'
-        for sub_exception in exceptions[item]:  # exceptions[item] contains lists of condition/reaction sets
-            condition_set = sub_exception[0]['if']  # sub_exception[0] is the dictionary, call the 'condition' key of that dictionary
-            state = condition_set[0]  # e.g. 'lit' or 'guarding'
-            condition = condition_set[1]  # e.g. True/False, 6a (location)
+    for exception in exceptions:  # item is either name of object/actor/location, or 'player'
+        conditions_passed = False
+        for condition_set in exception[0]['if']:  # for every exception list in the 'if' key
+            item = condition_set[0]  # e.g. player, lantern, troll, or 6a
+            state = condition_set[1]  # e.g. 'lit' or 'guarding'
+            condition = condition_set[2]  # e.g. True/False, 6a (location)
+            print('{} state "{}" needs to be {} in order for this exception to fire'.format(item, state, condition))
 
             if item == 'player':
                 item_state = getattr(player, state)
@@ -28,12 +29,18 @@ def exceptions_handler(dictionary, typ):
                         item_state = getattr(dictionary[item], state)
                         break
 
-            print('{} state -- {}: {}'.format(item, state, item_state))
+            print('{} state -- {} = {}'.format(item, state, item_state))
             if item_state == condition:
-                if typ == 'state change':
-                    return sub_exception[1]['reaction']
-                elif typ == 'narrative':
-                    return sub_exception[1]['narrative']
+                conditions_passed = True
+            else:
+                conditions_passed = False  # if for example the second time around it doesn't pass the condition,
+                # set it back to false
+
+        if conditions_passed:
+            if typ == 'state change':
+                return exception[1]['reaction']
+            elif typ == 'narrative':
+                return exception[1]['narrative']
 
 
 class Omnipotent:
@@ -267,19 +274,18 @@ class Object:
         self.info = obj_dict
         self.name = obj_name
 
-        attributes = obj_dict['attributes']
-        self.references = attributes['references']
-        self.description = attributes['description']
-        self.weight = attributes['weight']
-        self.damage = attributes['damage']
-        self.location = attributes['active_location']
+        self.references = 'references'
+        self.description = 'description'
+        self.weight = 'weight'
+        self.damage = 'damage'
+        self.location = 'active_location'
 
 
 class Container(Object):
     """Containers can hold objects inside them. Only one added attribute: inventory"""
     def __init__(self, obj_dict, obj_name):
         Object.__init__(self, obj_dict, obj_name)
-        self.inventory = obj_dict['attributes']['inventory']
+        self.inventory = obj_dict['inventory']
 
 
 class ComplexObject(Object):
@@ -304,27 +310,17 @@ class ComplexObject(Object):
         #     print(self.sc_reactions['exceptions']
         #           [player.active_location][new_state])
 
-    def react_to_state_change(self, state_change, boolean):
+    def react_to_state_change(self, state, boolean):
         """React to a state change"""
-        reaction = exceptions_handler(self.sc_reactions[state_change], 'state change')
-
-
-        #     if exception == 'player':
-        #             'location':
-        #         for location in exception:
-        #             if player.active_location == location:
-        #                 print(exceptions[exception][location][boolean])
-        #                 break
-        #
-        #     elif exception == 'object':
-        #         for object in exception:
-        #             pass
-        #             # if OBJECTS[object]
-        #     elif exception == 'actor':
-        #         pass
-        #     elif exception == 'player':
-        #         pass
-        # print(self.sc_reactions[state])
+        reaction = exceptions_handler(self.sc_reactions[state], 'state change')
+        general = self.sc_reactions[state]['general'][boolean]
+        if not reaction:
+            print(general)
+        else:
+            if not reaction.get(boolean):  # if the get() function returns None because the boolean key doesn't exist
+                print(general)
+            else:
+                print(reaction[boolean])
 
     def react_to_command(self, command):
         """React to a given command."""
@@ -335,7 +331,7 @@ class Actor(ComplexObject):
 
     def __init__(self, actor_dict, name):
         ComplexObject.__init__(self, actor_dict, name)
-        self.health = actor_dict['attributes']['health']
+        self.health = actor_dict['health']
 
 
 class Location:
@@ -514,9 +510,28 @@ actualize_data('OBJECTS', setup.obj_filename)
 actualize_data('ACTORS', setup.obj_filename)
 
 
-# OBJECTS['lantern'].react_to_state_change('lit', True)
+def test_state_changes():
+    print('---NEW---')
+    print('changing lantern lit to True')
+    OBJECTS['lantern'].react_to_state_change('lit', True)
+    
+    print('\n---NEW---')
+    print('changing lantern lit to False')
+    OBJECTS['lantern'].react_to_state_change('lit', False)
+    
+    player.active_location = '6a'
+    print('changed player location to 6a')
+    
+    print('\n---NEW---')
+    print('changing lantern lit to False')
+    OBJECTS['lantern'].react_to_state_change('lit', False)
+    print('\n---NEW---')
+    print('changing lantern lit to True')
+    OBJECTS['lantern'].react_to_state_change('lit', True)
+    print('\n---NEW---')
+    player.active_location = '4a'
+    # exceptions_handler(LOCATIONS['4a'].narratives['long'], 'narrative')
 
-exceptions_handler(LOCATIONS['4a'].narratives['long'])
 
 #
 # def react_to_state_change (self, state, boolean):
@@ -539,6 +554,7 @@ def gameplay():
 if __name__ == '__main__':
 
     player = Player()
+    test_state_changes()
     gameplay()
     # player.inventory.append('egg')
     try:

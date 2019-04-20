@@ -10,34 +10,31 @@ messages:
 OBJECTS:
   backpack:
     type: CONTAINER
-    attributes:
-      references: [backpack, bag, sack, pack, knapsack]
-      description: A brown linen durable backpack capable of holding up to 55 lbs.
-      active_location: '10'
-      inventory: []
-      weight: 3
-      damage: 5
+    references: [backpack, bag, sack, pack, knapsack]
+    description: A brown linen durable backpack capable of holding up to 55 lbs.
+    active_location: '10'
+    inventory: []
+    weight: 3
+    damage: 5
 
 
   egg:
     type: SIMPLE
-    attributes:
-      references: [egg, silver egg]
-      description: A large silver egg, weighing about 5 lbs.
-      loc_description: A large silver egg lays on the floor.
-      active_location: 6a
-      damage: 0
-      weight: 4
+    references: [egg, silver egg]
+    description: A large silver egg, weighing about 5 lbs.
+    loc_description: A large silver egg lays on the floor.
+    active_location: 6a
+    damage: 0
+    weight: 4
 
   lantern:
     type: COMPLEX
-    attributes:
-      references: [lantern, light, brass]
-      description: A brass lantern with clouded glass doors and a curved black handle.
-      weight: 6
-      damage: 10
-      active_location: 6a
-      
+    references: [lantern, light, brass]
+    description: A brass lantern with clouded glass doors and a curved black handle.
+    weight: 6
+    damage: 10
+    active_location: 6a
+    
     states:
       lit: False
       light_guard: True
@@ -51,14 +48,18 @@ OBJECTS:
           general:
             True: The light turns on, but it doesn't help - it's already light here.
             False: The light turns off, but so what? It's already light here.
-          exceptions:
-            troll: [[if: [guarding, True],
-              reaction: {True: The troll's power stops the light from turning on.}]]
-
-            player: [[if: [active_location, 6a],
+          exceptions: 
+            ### Ask sharfman about having two conditions that evaluate to true how to deal with that.
+            - [if: [[player, active_location, 6a]],
               reaction: {True: 'The light turns on, and everything becomes more clear.
                                 You see a stone staircase rise up in front of you.',
-                        False: 'The light flickers off, and it becomes harder to see.'}]]
+                        False: 'The light flickers off, and it becomes harder to see.'}]
+
+            - [if: [[troll, guarding, True], [player, active_location, 4a]],
+              reaction: {True: The troll's power stops the light from turning on.}]
+              
+
+            
                 
       commands:
         take: You pick up the lantern and brush off the dust covering the stained 
@@ -70,14 +71,13 @@ ACTORS:
   # actors don't have a weight, it doesn't really matter how heavy they are
   # because you're not throwing them at something as you don't have control over them.
   troll:
-    attributes:
-      references: [troll, ugly]
-      description: a large ugly troll
-      active_state: guarding
-      active_location: 4a
-      weight: None
-      damage: 17
-      health: 100
+    references: [troll, ugly]
+    description: a large ugly troll
+    active_state: guarding
+    active_location: 4a
+    weight: None
+    damage: 17
+    health: 100
 
     states:
       guarding: True
