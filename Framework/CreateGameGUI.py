@@ -27,7 +27,8 @@ class Display:
 
 		self.tabControl.pack(expand=1, fill=BOTH)
 
-		self.row_counter = 0
+		self.row_counter = 0  # keep track of the rows
+		self.column_counter = -1
 		self.LOCATIONS = {}
 		self.OBJECTS = {}
 		self.ACTORS = {}
@@ -39,37 +40,50 @@ class Display:
 
 		self.root.mainloop()
 
-	def add_entry(self, tab_obj, var_name, enter_text, sticky=W+E+N+S, anchor='w'):
+	def add_entry(self, tab_obj, var_name, label_text, column, sticky=W+E+N+S, anchor='w', header=False):
 		"""Adds an entry box and a var_name for it."""
 
-		self.__setattr__(var_name, Entry(tab_obj))  # set attribute with name: var_name to an Entry object in the tab provided
-		getattr(self, var_name).grid(row=self.row_counter, column=1, padx=5, pady=5, sticky=sticky)  # grid it
+		if header:
+			setattr(self, var_name+'Title', Label(tab_obj, text=label_text, anchor=anchor, padx=5, font='Helvetica 12 bold'))  # add a label with the
+		# text that was passed in and called it the var_name passed in with 'Title' added at the end.
+		else:
+			setattr(self, var_name + 'Title', Label(tab_obj, text=label_text, anchor=anchor, padx=5))
+		getattr(self, var_name+'Title').grid(row=self.row_counter, column=column, padx=5, pady=5, sticky=sticky)
+
+		setattr(self, var_name, Entry(tab_obj))  # set attribute with name: var_name to an Entry object in the tab provided
+		getattr(self, var_name).grid(row=self.row_counter, column=column+1, padx=5, pady=5, sticky=sticky)  # grid it
 
 		def entry_handler(event):  # bound to the <Return> key
 
-			item_ID = self.cur_itemID
+			item_ID = self.cur_itemID  # this will be either a location number, object name, or actor name
 			dictionary = getattr(self, self.cur_DICT)  # use cur_DICT string to get the attribute by the name of the string
 			print('dictionaryyy in add_entry:', dictionary)
 			print('item IDDDD:', item_ID)
 
 			if dictionary is self.LOCATIONS:
-				string = getattr(self, var_name).get()
+				string = getattr(self, var_name).get()  # get the text from tbe entry box. 
 				if var_name == 'references':
-					references = [reference.strip() for reference in string.split(',')]
-					dictionary[item_ID]['references'] = references
+					references = [reference.strip() for reference in string.split(',')]  # split by command and strip whitespaces
+					dictionary[item_ID]['references'] = references  # put it in references
 				elif var_name == 'long_nar':
-					dictionary[item_ID]['NARRATIVES'] = {'long': string}
+					dictionary[item_ID]['NARRATIVES'] = {'long': string}  # set the long narrative key to the string. If the user
+					# decides that this narrative set will have exceptions, this string will end up being put in the 'general' key.
 					#
 					# dictionary[item_ID]['NARRATIVES']['long']['exceptions'] = string
+				for move in ['N', 'E', 'S', 'W']:
+					if var_name == move:
+						dictionary[item_ID]['MOVES'][var_name] = string
+						break
+
 				else:
 					dictionary[item_ID][var_name] = string
 
 			print('entry text:', getattr(self, var_name).get())
 
 			# dictionary[item_ID][var_name] = getattr(self, var_name).get()
-			print(dictionary)
+			print('dictionary above tab:', dictionary)
 			#
-			# self.__setattr__(var_name+'_attr', getattr(self, var_name).get())  # set attribute called whatever the entry name is
+			# setattr(self, var_name+'_attr', getattr(self, var_name).get())  # set attribute called whatever the entry name is
 			# # to whatever the user typed into entry box.
 			# print(getattr(self, var_name+'_attr'))
 
@@ -78,18 +92,25 @@ class Display:
 
 		getattr(self, var_name).bind("<Return>", entry_handler)  # bind to entry_handler function
 
-		self.__setattr__(var_name+'Title', Label(tab_obj, text=enter_text, anchor=anchor, padx=5))  # set another attribute
-		getattr(self, var_name+'Title').grid(row=self.row_counter, column=0, padx=5, pady=5, sticky=sticky)
-
 		self.row_counter += 1
 
-	def add_label(self, tab_obj, var_name, text):
+	def add_label(self, tab_obj, var_name, text, column, two_rows=True, header=(False, False)):
 		"""Adds label and grids it."""
-		self.__setattr__(var_name, Label(tab_obj, text=text, anchor='w', padx=5))
-		getattr(self, var_name).grid(row=self.row_counter+1, column=0, padx=5, pady=5, sticky=W)
-		self.row_counter += 1
+		row = self.row_counter+1 if two_rows else self.row_counter
+		if header[0]:
+			if header[1]:
+				setattr(self, var_name, Label(tab_obj, text=text, anchor='w', padx=5, pady=5, font='Helvetica 13 bold'))
+			else:
+				setattr(self, var_name, Label(tab_obj, text=text, anchor='w', padx=5, pady=5, font='Helvetica 10 bold'))
+		else:
+			setattr(self, var_name, Label(tab_obj, text=text, anchor='w', padx=5, pady=5))
+		getattr(self, var_name).grid(row=row, column=column, padx=5, pady=5, sticky=W)
+		if two_rows:
+			self.row_counter += 2  # you add two because
+		else:
+			self.row_counter += 1
 
-	def add_checkboxes(self, tab_obj, var_name, text):
+	def add_checkboxes(self, tab_obj, var_name, text, column):
 		"""Adds checkboxes and associated entry fields."""
 
 		def add_exception():
@@ -164,31 +185,34 @@ class Display:
 		label_name = var_name.replace('chkBox', 'label')
 		text_name = var_name.replace('chkBox', 'text')
 
-		self.__setattr__(bool_name, BooleanVar())
+		setattr(self, bool_name, BooleanVar())
 
-		self.__setattr__(var_name, Checkbutton(tab_obj, text=text, padx=5,
+		setattr(self, var_name, Checkbutton(tab_obj, text=text, padx=5,
 												variable=getattr(self, bool_name),
 												command=checkbox_handler))
 
-		getattr(self, var_name).grid(row=self.row_counter, column=0, padx=5, pady=5, sticky=W)
+		getattr(self, var_name).grid(row=self.row_counter, column=column, padx=5, pady=5, sticky=W)
 
 		if 'exception' in var_name:
-			self.add_label(tab_obj, label_name, 'Exception:')
+			self.add_label(tab_obj, label_name, 'Exception:', column=column)
 
-		self.__setattr__(entry_name, Entry(tab_obj))
-		getattr(self, entry_name).grid(row=self.row_counter+1, column=0, padx=5, pady=5, sticky=W)
+		setattr(self, entry_name, Entry(tab_obj))
+		getattr(self, entry_name).grid(row=self.row_counter, column=column, padx=5, pady=5, sticky=W)
 		getattr(self, entry_name).insert(0, 'DISABLED')
 		getattr(self, entry_name).config(state=DISABLED)
 		getattr(self, entry_name).bind('<Return>', exception_entry_handler)
 
-		self.__setattr__(button_name, Button(tab_obj, text='Add Another Exception', state=DISABLED, padx=6, pady=6,
-																		command=add_exception))
-		getattr(self, button_name).grid(row=self.row_counter+1, column=1, padx=5, pady=5, sticky=W)
-		self.row_counter += 2
-
 		if 'exception' in var_name:
-			self.add_entry(tab_obj, text_name, 'Exception Text:')
+			print("'exception' in var_name, which is:", var_name)
+			setattr(self, button_name, Button(tab_obj, text='Add Another Exception', state=DISABLED, padx=6, pady=6,
+																		command=add_exception))
+			getattr(self, button_name).grid(row=self.row_counter, column=column+1, padx=5, pady=5, sticky=W)
+			self.row_counter += 1
+
+			self.add_entry(tab_obj, text_name, 'Exception Text:', column=column)
 			getattr(self, text_name).config(state=DISABLED)
+
+		self.row_counter += 1
 
 	def create_location_stuff(self):
 		"""Creates location stuff."""
@@ -202,35 +226,58 @@ class Display:
 			print('cur_loc_num:', self.cur_itemID)
 			press('tab')
 
-		# self.add_entry(self.locTab, var_name='LocNum', enter_text='Location Number:')
+		# self.add_entry(self.locTab, var_name='LocNum', label_text='Location Number:')
+		# Add the location number entry box. This is not done using the add_entry method because it is needed to be done
+		# before everything to set up the location dictionary with locNum as the key.
+
+		self.LocNumWarning = Label(self.locTab, text='DO THIS FIRST! --->', anchor='e', padx=5, font='Helvetica 13 bold')
+		self.LocNumWarning.grid(row=self.row_counter, column=0, padx=5, pady=5, sticky=W + E + N + S)
+
+		self.LocNumTitle = Label(self.locTab, text='Location Number --->', anchor='w', padx=5)
+		self.LocNumTitle.grid(row=self.row_counter, column=1, padx=5, pady=5, sticky=W + E + N + S)
+
 		self.LocNum = Entry(self.locTab)
-		self.LocNum.grid(row=self.row_counter, column=1, padx=5, pady=5, sticky=W+E+N+S)
+		self.LocNum.grid(row=self.row_counter, column=2, padx=5, pady=5, sticky=W+E+N+S)
 		self.LocNum.bind("<Return>", loc_entry_handler)
-		self.LocNumTitle = Label(self.locTab, text='Location Number', anchor='w', padx=5)
-		self.LocNumTitle.grid(row=self.row_counter, column=0, padx=5, pady=5, sticky=W+E+N+S)
+
+		self.row_counter += 3
+
+		ttk.Separator(self.locTab, orient=HORIZONTAL).grid(row=self.row_counter, sticky=NSEW, rowspan=1, columnspan=3)
 		self.row_counter += 1
 
 		loc_entries = [('name', 'Name:'), ('references', 'References:'), ('can_enter', 'Can enter:')]
 		for var_name, text in loc_entries:
-			self.add_entry(self.locTab, var_name=var_name, enter_text=text)
+			self.add_entry(self.locTab, var_name=var_name, label_text=text, column=0)
 
-		self.add_label(self.locTab, var_name='narratives_label', text='NARRATIVES')
+		ttk.Separator(self.locTab, orient=HORIZONTAL).grid(row=self.row_counter, sticky=NSEW, rowspan=1, columnspan=4)
 
-		self.add_entry(self.locTab, var_name='long_nar', enter_text='Long:')
+		self.add_label(self.locTab, var_name='narratives_label', text='NARRATIVES', column=0, header=(True, True))
 
-		checkboxes = [('long_exception_chkBox', 'Long Exceptions'), ('short_chkBox', 'Short'),
-						('short_exception_chkBox', 'Short Exceptions')]
+		self.add_entry(self.locTab, var_name='long_nar', label_text='LONG:', column=0, header=True)
 
+		checkboxes = [('long_exception_chkBox', 'Long Exceptions'), ('short_nar_chkBox', 'Short:')]
 		for var_name, text in checkboxes:
 			print(var_name, text)
-			self.add_checkboxes(getattr(self, 'locTab'), var_name, text)
+			self.add_checkboxes(getattr(self, 'locTab'), var_name, text, column=0)
 
-		self.add_label(self.locTab, 'moves', 'Moves')
-		self.row_counter += 1
+		self.add_entry(self.locTab, var_name='short_nar', label_text='SHORT:', column=0, header=True)
 
-		move_entries = [('n', 'North:'), ('e', 'East:'), ('s', 'South:'), ('w', 'West:')]
+		self.add_checkboxes(getattr(self, 'locTab'), 'short_exception_chkBox', 'Short Exceptions', column=0)
+
+		self.row_counter = 8
+
+		self.add_entry(self.locTab, 'objects', 'OBJECTS', column=2, header=True)
+		print('under objects line:', self.row_counter)
+
+		self.add_label(self.locTab, 'moves', 'MOVES', column=2, two_rows=False, header=(True, True))
+		print('under moves line:', self.row_counter)
+
+		move_entries = [('N', 'North:'), ('E', 'East:'), ('S', 'South:'), ('W', 'West:')]
 		for var_name, text in move_entries:
-			self.add_entry(self.locTab, var_name=var_name, enter_text=text)
+			self.add_entry(self.locTab, var_name=var_name, label_text=text, column=2)
+
+		print(self.narratives_label.grid_info()['row'])
+
 
 
 display = Display()
