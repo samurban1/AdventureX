@@ -55,15 +55,16 @@ OBJECTS:
                         False: 'The light flickers off, and it becomes harder to see.'}]
 
             - [if: [[troll, guarding, True], [player, active_location, 4a]],
-              reaction: {True: The troll's power stops the light from turning on.}]
-              
-
-            
+              reaction: {True: The troll's power stops the light from turning on.}]  
                 
       commands:
         take: You pick up the lantern and brush off the dust covering the stained 
             glass sides. It looks like it has been here for a while.
-        throw: You throw the lantern and it falls with a clatter on the ground a few feet away.
+        throw:
+          general: You throw the lantern and it falls with a clatter on the ground a few feet away.
+          exceptions:
+            - [if: [[troll, guarding, True], [player, active_location, 4a]],
+              reaction: You throw the lantern and the troll runs away, scared.]  
         #- attack: *unattackable
 
 ACTORS:
