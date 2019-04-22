@@ -4,17 +4,15 @@ from tkinter import *
 import tkinter.messagebox, tkinter.ttk as ttk
 from pyautogui import press, hotkey
 from ttkthemes import ThemedTk
-import yaml
-import yamlordereddictloader
+import yaml, random, yamlordereddictloader
 from collections import OrderedDict
-import time
-from functools import partial
 
 
 class Display:
 
 	def __init__(self):
-		self.root = ThemedTk(theme="elegance")
+		themes = ["arc", "blue", "elegance"]
+		self.root = ThemedTk(theme=random.choice(themes))
 		self.root.title('Create Adventure')
 		# self.center(self.root)
 
@@ -32,6 +30,10 @@ class Display:
 
 		self.tabControl.pack(expand=1, fill=BOTH)
 
+		self.tabControl.bind("<<NotebookTabChanged>>", self.change_cur_DICT)
+
+		self.objTab.bind("<Visibility>", self.create_object_stuff)  # this is only for the first time it opens the Objects tab
+
 		self.row_counter = 0  # to keep track of the rows
 		self.LOCATIONS = {}
 		self.OBJECTS = {}
@@ -41,9 +43,22 @@ class Display:
 		self.cur_DICT = 'LOCATIONS'
 
 		self.create_location_stuff()
-		self.create_object_stuff()
+		print(self.tabControl.tab(self.tabControl.select(), "text"))
 
 		self.root.mainloop()
+
+	def change_cur_DICT(self, event):
+		"""Updates the current dictionary."""
+		curTab = self.tabControl.tab(self.tabControl.select(), "text")
+		print('current tab:', curTab)
+		if curTab == 'Locations':
+			self.cur_DICT = 'LOCATIONS'
+			self.cur_itemID = getattr(self, 'LocNumEntry').get()
+		elif curTab == 'Objects':
+			self.cur_DICT = 'OBJECTS'
+			self.cur_itemID = getattr(self, 'ObjNameEntry').get()
+		print('current ITemID:', self.cur_itemID)
+		self.tabControl.focus()
 
 	def add_entry(self, tab_obj, var_name, label_text, column, sticky=W+E+N+S, anchor='w', header=False):
 		"""Adds an entry box and a var_name for it."""
@@ -67,11 +82,15 @@ class Display:
 
 			if dictionary is self.LOCATIONS:
 				print('varname in if dict is self locations:', var_name)
-				string = getattr(self, var_name).get()  # get the text from tbe entry box. 
-				if var_name == 'references':
+				string = getattr(self, var_name).get()  # get the text from tbe entry box.
+				if 'references' in var_name:
+					print('this is the item id in references if:', item_ID, 'and the self.id:', self.cur_itemID)
 					dictionary[item_ID]['visited'] = 0
 					references = [reference.strip() for reference in string.split(',')]  # split by command and strip whitespaces
 					dictionary[item_ID]['references'] = references  # put it in references
+					print('this is the string:', string)
+					print('{}[{}]["references"] = (references:)', references)
+
 				elif var_name == 'can_enter':
 					if string == 'always':
 						dictionary[item_ID][var_name] = string
@@ -102,6 +121,19 @@ class Display:
 					dictionary[item_ID][var_name] = string
 
 				print('dictionary in if dict is self locations:', self.LOCATIONS)
+
+			elif dictionary is self.OBJECTS:
+				print('varname in if dict is self locations:', var_name)
+				string = getattr(self, var_name).get()  # get the text from tbe entry box.
+				if 'references' in var_name:
+					print('this is the item id in references if:', item_ID, 'and the self.id:', self.cur_itemID)
+					references = [reference.strip() for reference in string.split(',')]  # split by command and strip whitespaces
+					dictionary[item_ID]['references'] = references  # put it in references
+					print('this is the string:', string)
+					print('{}[{}]["references"] = (references:)', references)
+				else:
+					dictionary[item_ID][var_name] = string
+
 
 			print('entry text:', getattr(self, var_name).get())
 
@@ -134,6 +166,49 @@ class Display:
 			self.row_counter += 2  # you add two because
 		else:
 			self.row_counter += 1
+
+	def add_button(self, tab_obj, btn_var, entry_var, text, row, column):
+		"""Adds a button."""
+
+		def exception_entry_handler(event):
+
+			string = getattr(self, entry_var).get()
+			exception_set = self.string2value(string)
+
+			print(exception_set)
+			# self.all_conditions.append(exception_set)
+			# print(self.all_conditions)
+
+			getattr(self, btn_var).invoke()
+
+		def click_handler():
+			getattr(self, entry_var).delete(0, END)
+
+		setattr(self, btn_var, Button(tab_obj, text=text, padx=6, pady=6,
+										command=click_handler, highlightbackground='#5FD052', fg='black'))
+		getattr(self, btn_var).grid(row=row, column=column, padx=5, pady=5, sticky=W)
+
+	@staticmethod
+	def string2value(string):
+
+		def to_value (item):
+			try:
+				return int(item)
+			except ValueError:
+				try:
+					if item == 'True':
+						return True
+					elif item == 'False':
+						return False
+					else:
+						raise ValueError
+				except ValueError:
+					return item
+
+		exception_set = [item.strip() for item in string.split(',')]
+		for i in range(len(exception_set)):
+			exception_set[i] = to_value(exception_set[i])
+		return exception_set
 
 	def add_checkboxes(self, tab_obj, var_name, text, column):
 		"""Adds checkboxes and associated entry fields."""
@@ -181,39 +256,13 @@ class Display:
 
 		def exception_entry_handler(event):
 
-			def string2value(item):
-				try:
-					return int(item)
-				except ValueError:
-					try:
-						if item == 'True':
-							return True
-						elif item == 'False':
-							return False
-						else:
-							raise ValueError
-					except ValueError:
-						return item
-
 			string = getattr(self, entry_name).get()
-			exception_set = [item.strip() for item in string.split(',')]
-			for i in range(len(exception_set)):
-				exception_set[i] = string2value(exception_set[i])
+			exception_set = self.string2value(string)
 
 			self.all_conditions.append(exception_set)
 			print(self.all_conditions)
 
 			getattr(self, cond_button_name).invoke()
-			#
-			# dictionary = getattr(self, self.cur_DICT)
-			# item_ID = self.cur_itemID
-			# if dictionary is self.LOCATIONS:
-			# 	if 'long' in entry_name:  # if we are dealing with narratives
-			# 		print(dictionary[item_ID]['NARRATIVES']['long']['exceptions'])
-					# dictionary[item_ID]['NARRATIVES']['long']['exceptions'].append({'if': exception_set})
-		# dictionary[item_ID]['NARRATIVES']['long']['exceptions'].append()
-
-		# elif var_name == 'long_exception_text':
 
 		bool_name = var_name.replace('_chkBox', '')
 		entry_name = var_name.replace('chkBox', 'entry')
@@ -258,52 +307,6 @@ class Display:
 
 		self.row_counter += 1
 
-	def create_location_stuff(self):
-		"""Creates location stuff."""
-
-		def loc_entry_handler(event):
-
-			self.LOCATIONS = {}  # reset it to empty every time user re-enters it.
-			self.cur_itemID = self.LocNum.get()
-			self.LOCATIONS[self.cur_itemID] = {}
-			print(self.LOCATIONS)
-			print('cur_loc_num:', self.cur_itemID)
-			press('tab')
-
-		# self.add_entry(self.locTab, var_name='LocNum', label_text='Location Number:')
-		# Add the location number entry box. This is not done using the add_entry method because it is needed to be done
-		# before everything to set up the location dictionary with locNum as the key.
-
-		self.setup(self.locTab, 'LOCATIONS', 'LocNumWarning', 'LocNumTitle', 'LocNumEntry', 'Location Number --->')
-
-		loc_entries = [('name', 'NAME:'), ('references', 'REFERENCES: (split by comma)'), ('can_enter', 'CAN ENTER: (split conditions by period\nand condition set items by commas)')]
-		for var_name, text in loc_entries:
-			self.add_entry(self.locTab, var_name=var_name, label_text=text, column=0)
-
-		ttk.Separator(self.locTab, orient=HORIZONTAL).grid(row=self.row_counter, sticky=NSEW, rowspan=1, columnspan=4)
-
-		self.add_label(self.locTab, var_name='narratives_label', text='NARRATIVES', column=0, header=(True, True), bg='#F9CE5F')
-
-		self.add_entry(self.locTab, var_name='long_nar', label_text='LONG:', column=0, header=True)
-		self.add_checkboxes(self.locTab, 'long_exception_chkBox', 'Long Exceptions', column=0)
-		self.add_entry(self.locTab, var_name='short_nar', label_text='SHORT:', column=0, header=True)
-		self.add_checkboxes(self.locTab, 'short_nar_exception_chkBox', 'Short Exceptions', column=0)
-
-		self.row_counter = 8
-
-		self.add_label(self.locTab, 'moves', 'MOVES', column=2, two_rows=False, header=(True, True), bg='#F9CE5F')
-		print('under moves line:', self.row_counter)
-
-		move_entries = [('N', 'North takes player to:'), ('E', 'East takes player to:'), ('S', 'South takes player to:'), ('W', 'West takes player to:')]
-		for var_name, text in move_entries:
-			self.add_entry(self.locTab, var_name=var_name, label_text=text, column=2)
-
-		self.add_entry(self.locTab, 'objects', 'OBJECTS', column=2, header=True)
-		print('under objects line:', self.row_counter)
-
-		self.add_clear_button(self.locTab, 'locClearBtn')
-		self.add_finish_button(self.locTab, 'locFinishBtn')
-
 	def add_clear_button(self, tab_obj, btn_name):
 		"""Adds a button to clear the current dictionary, for user to be able to start over."""
 		setattr(self, btn_name, Button(tab_obj, text='Clear location DICT', padx=10, pady=10, fg='white', command=self.clear_dict, highlightbackground='#ff0000'))
@@ -343,9 +346,72 @@ class Display:
 		ttk.Separator(tab_obj, orient=HORIZONTAL).grid(row=self.row_counter, sticky=NSEW, rowspan=1, columnspan=3)
 		self.row_counter += 1
 
-	def create_object_stuff(self):
+	def clear_dict(self):
+		"""Clears the current dictionary."""
+		result = tkinter.messagebox.askyesnocancel('Delete dictionary', 'You sure you want to delete?')
+		if result:
+			dictionary = getattr(self, self.cur_DICT)
+			dictionary[self.cur_itemID] = {}
+			print(dictionary)
+
+	def save(self):
+		filename = '/Users/Sam/Documents/Shalhevet/CompSci/CompSci Work/Capstone/Github/AdventureX/Framework/Location Data.yaml'
+		# with open(filename) as infile:
+		# 	dictionary = yaml.load(infile)
+		with open(filename, 'a') as outfile:
+			# dictionary[self.cur_DICT][self.cur_itemID] = getattr(self, self.cur_DICT)
+			print(getattr(self, self.cur_DICT))
+			# ruamel.yaml.dump(getattr(self, self.cur_DICT), outfile, default_flow_style=False)
+			dictionary = getattr(self, self.cur_DICT)
+			yaml.dump({self.cur_itemID: OrderedDict(dictionary[self.cur_itemID])}, outfile, Dumper=yamlordereddictloader.Dumper, default_flow_style=None)
+
+	def create_location_stuff(self):
+		"""Creates location stuff."""
+
+		# self.add_entry(self.locTab, var_name='LocNum', label_text='Location Number:')
+		# Add the location number entry box. This is not done using the add_entry method because it is needed to be done
+		# before everything to set up the location dictionary with locNum as the key.
+
+		self.setup(self.locTab, 'LOCATIONS', 'LocNumWarning', 'LocNumTitle', 'LocNumEntry', 'Location Number --->')
+
+		loc_entries = [('name', 'NAME:'), ('loc_references', 'REFERENCES: (split by comma)'), ('can_enter', 'CAN ENTER: (split cond_set items by commas)')]
+		for var_name, text in loc_entries:
+			self.add_entry(self.locTab, var_name=var_name, label_text=text, column=0)
+			print('row:', self.row_counter, var_name)
+
+		self.add_button(self.locTab, 'add_enter_cond', entry_var='can_enter', text='Add enter condition', row=self.row_counter-1, column=2)
+		print('rowp:', self.row_counter)
+
+		ttk.Separator(self.locTab, orient=HORIZONTAL).grid(row=self.row_counter, sticky=NSEW, rowspan=1, columnspan=4)
+
+		self.add_label(self.locTab, var_name='narratives_label', text='NARRATIVES', column=0, header=(True, True), bg='#F9CE5F')
+
+		self.add_entry(self.locTab, var_name='long_nar', label_text='LONG:', column=0, header=True)
+		self.add_checkboxes(self.locTab, 'long_exception_chkBox', 'Long Exceptions', column=0)
+		self.add_entry(self.locTab, var_name='short_nar', label_text='SHORT:', column=0, header=True)
+		self.add_checkboxes(self.locTab, 'short_nar_exception_chkBox', 'Short Exceptions', column=0)
+
+		self.row_counter = 8
+
+		self.add_label(self.locTab, 'moves', 'MOVES', column=2, two_rows=False, header=(True, True), bg='#F9CE5F')
+		print('under moves line:', self.row_counter)
+
+		move_entries = [('N', 'North takes player to:'), ('E', 'East takes player to:'), ('S', 'South takes player to:'), ('W', 'West takes player to:')]
+		for var_name, text in move_entries:
+			self.add_entry(self.locTab, var_name=var_name, label_text=text, column=2)
+
+		self.add_entry(self.locTab, 'objects', 'OBJECTS', column=2, header=True)
+		print('under objects line:', self.row_counter)
+		self.row_counter += 1
+		self.add_entry(self.locTab, var_name='auto_changes', label_text='Automatic changes upon arrival: (split item_attribute_set by commas)', column=2)
+
+		self.add_clear_button(self.locTab, 'locClearBtn')
+		self.add_finish_button(self.locTab, 'locFinishBtn')
+
+	def create_object_stuff(self, event):
 		"""Creates the object stuff."""
 
+		self.objTab.unbind("<Visibility>")
 		self.row_counter = 0
 		self.setup(self.objTab, 'OBJECTS', 'ObjNameWarning', 'ObjNameTitle', 'ObjNameEntry', 'Object Name --->')
 
@@ -368,25 +434,6 @@ class Display:
 
 		self.add_clear_button(self.objTab, 'objClearBtn')
 		self.add_finish_button(self.objTab, 'objFinishBtn')
-
-	def clear_dict(self):
-		"""Clears the current dictionary."""
-		result = tkinter.messagebox.askyesnocancel('Delete dictionary', 'You sure you want to delete?')
-		if result:
-			dictionary = getattr(self, self.cur_DICT)
-			dictionary[self.cur_itemID] = {}
-			print(dictionary)
-
-	def save(self):
-		filename = '/Users/Sam/Documents/Shalhevet/CompSci/CompSci Work/Capstone/Github/AdventureX/Framework/Location Data.yaml'
-		# with open(filename) as infile:
-		# 	dictionary = yaml.load(infile)
-		with open(filename, 'a') as outfile:
-			# dictionary[self.cur_DICT][self.cur_itemID] = getattr(self, self.cur_DICT)
-			print(getattr(self, self.cur_DICT))
-			# ruamel.yaml.dump(getattr(self, self.cur_DICT), outfile, default_flow_style=False)
-			dictionary = getattr(self, self.cur_DICT)
-			yaml.dump({self.cur_itemID: OrderedDict(dictionary[self.cur_itemID])}, outfile, Dumper=yamlordereddictloader.Dumper, default_flow_style=None)
 
 
 display = Display()
