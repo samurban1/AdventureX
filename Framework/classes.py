@@ -317,7 +317,7 @@ class ComplexObject(Object):
         """
         if self.sc_reactions[state].get('general'):  # could also use 'exceptions' for this. If there is a 'general' key
             # that means there is a general/exceptions pair.
-            reaction = exceptions_handler(self.sc_reactions[state], 'state change')
+            reaction = exceptions_handler(self.sc_reactions[state], typ='state change')
             general = self.sc_reactions[state]['general'][boolean]
             if not reaction:  # if none of the conditions are met and exceptions_handler() returns None
                 print(general)
@@ -363,47 +363,11 @@ class Location:
     def narrate(self, typ=None):
         """Does a few checks and then prints the appropriate narrative."""
         def check_narrative(nars):
-            """If the long/short narrative is a list of narratives:
-                    that means that there are multiple nars based on attributes.
-                    Loop through that list, and if loop variable is a dictionary,
-                    that means we hit an attribute narrative. Get attribute string
-                    using keys() iterator and then check if player has that attribute.
-                    If so, make final variable = to the narrative corresponding to attribute
-                    and break out of loop so final is saved. We can break out because if it
-                    matches a player attribute, we know that's the only narrative we want.
-                    If loop var is not a dict, simply set final = to the narrative.
-                    After the loop, return final, whatever final ended up being.
-               If not, simply return the passed in (argument) narrative.
-            """
+            """Returns appropriate narrative."""
             if type(nars) is not dict:
                 return nars
             else:
-                return exceptions_handler(nars, 'narrative')
-
-
-
-            # if type(nars) is list:
-            #     for nar in nars:
-            #         if type(nar) is dict:
-            #             attribute = ''.join([key for key in nar.keys()])  # this will obviously always only have one value
-            #             prereq = self.conditions[attribute]
-            #             if prereq == 'player':
-            #                 if attribute in player.attributes:
-            #                     final = nar[attribute]
-            #             elif prereq in LOCATIONS:
-            #                 # if the condition is for a location, in which the value would be the loc num
-            #                 if attribute in LOCATIONS[prereq].attributes:
-            #                     final = nar[attribute]
-            #             # elif prereq in objects:
-            #             #     if attribute in OBJECTS[prereq].attributes:
-            #             #         final = nar[attribute]
-            #             break  # is this bad if there are multiple dicts,
-            #             # multiple attribute narratives in one long location?
-            #         else:
-            #             final = nar
-            #     return final
-            # else:
-            #     return nars
+                return exceptions_handler(nars, typ='narrative')
 
         if self.visited == 0 or typ == 'long':
             print('\nprinting long in location', self.num)
@@ -538,11 +502,6 @@ def test_state_changes():
     print('\n---NEW---')
     player.active_location = '4a'
     exceptions_handler(LOCATIONS['4a'].narratives['long'], 'narrative')
-
-    print('\n---NEW---')
-    OBJECTS['test'].react_to_state_change('testing', False)
-    print('\n---NEW---')
-    OBJECTS['test'].react_to_state_change('testing', True)
 
 
 #
