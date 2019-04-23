@@ -1,3 +1,63 @@
+from nltk import RegexpParser
+# dirCMD = RegexpParser(r"Chunk: {<VB><DIR>}")
+# simpleCMD = RegexpParser(r"Chunk: {<VB><OBJ>}")
+OBJ = 'OBJ'
+PRP = 'PRP'
+VB = 'VB'
+ACT= 'ACT'
+AND = 'AND'
+
+# tagged = [('take', VB), ('egg', OBJ), ('go', VB), ('north', 'DIR'), ('attack', VB), ('TROLL', 'ACT')]
+tagged = [('lantern', OBJ), ('to', PRP), ('attack', VB), ('troll', ACT)]
+tagged = [('take', VB), ('lantern', OBJ), ('and', AND), ('take', VB), ('egg', OBJ)]
+
+short_phrases = r"""
+			VB-ACT-PRP-OBJ: {<VB><ACT><PRP><OBJ>}
+			OBJ-PRP-VB-ACT: {<OBJ><PRP><VB><ACT>}
+			VB-OBJ: {<VB><OBJ>}
+			VB-DIR: {<VB><DIR>}
+			VB-ACT: {<VB><ACT>}
+			"""
+# long_phrases = r"""
+# 			VB-ACT-PRP-OBJ: {<VB><ACT><PRP><OBJ>}
+# 			OBJ-PRP-VB-ACT: {<OBJ><PRP><VB><ACT>}
+# 			"""
+# make sure egg to take, make sure it fits with user allowed weight
+
+chunkParser = RegexpParser(short_phrases)
+
+chunked = chunkParser.parse(tagged)
+# for subtree in chunked.subtrees():
+#     # print the noun phrase as a list of part-of-speech tagged words
+#     print(chunked.leaves())
+response = chunked
+print(response)
+
+print(chunked.draw())
+
+structure = None
+
+
+def activate_func(self, func, *args):
+	getattr(self, func)(args)
+
+for command, structure in structures:
+	if structure is VB_OBJ:
+		activate_func(command[0], command[1])
+
+
+
+#
+# chunkParser = RegexpParser(long_phrases)
+#
+# chunked = chunkParser.parse(tagged)
+#
+# print(chunked.draw())
+
+#
+# for chunk in chunked:
+# 	print(chunk[0][0], '|', chunk[1][0])
+
 # from nltk import pos_tag
 #
 #
@@ -203,27 +263,5 @@
 #         elif pos_tag([word])[0][1] == 'IN':  # NLTK pos_tag, argument is list, index 0 is the tuple inside the list,
 #             # index 1 is second item of tuple, which is the part of speech.
 #             tagged.append((word, 'PRP'))
-#
+
 #     get_command(tagged)
-
-from nltk import RegexpParser
-# dirCMD = RegexpParser(r"Chunk: {<VB><DIR>}")
-# simpleCMD = RegexpParser(r"Chunk: {<VB><OBJ>}")
-
-tagged = [('take', 'VB'), ('egg', 'OBJ'), ('go', 'VB'), ('north', 'DIR'), ('attack', 'VB'), ('TROLL', 'ACT')]
-
-chunker = r"""
-			VB-OBJ: {<VB><OBJ>}
-			VB-DIR: {<VB><DIR>}
-			VB-ACT: {<VB><ACT>}
-			"""
-# make sure egg to take, make sure it fits with user allowed weight
-
-chunkparser = RegexpParser(chunker)
-
-chunked = chunkparser.parse(tagged)
-
-print(chunked.draw())
-#
-# for chunk in chunked:
-# 	print(chunk[0][0], '|', chunk[1][0])
