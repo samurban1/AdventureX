@@ -37,7 +37,7 @@ def exceptions_handler(dictionary, typ):
                 # set it back to false
 
         if conditions_passed:
-            if typ == 'state change':
+            if typ == 'state change' or 'command':
                 return exception[1]['reaction']
             elif typ == 'narrative':
                 return exception[1]['narrative']
@@ -89,8 +89,8 @@ class Omnipotent:
         for dict in COMMANDS['general_commands']:  # looping over all the dicts of verbs + needs + action sets
             if word in dict['verbs']:  # if the word is in the verbs list of current loop dict, now you have your verb
                 verb = dict['action'][0]
-                needs = [need.split('/') for need in dict['needs']]
-                return verb, needs
+                # needs = [need.split('/') for need in dict['needs']]
+                return verb #, needs
         return False
 
     @staticmethod
@@ -122,8 +122,7 @@ class Omnipotent:
         for item in dictionary.values():  # loop over dict.values() which gives you the actual python objects of objects/locations.
             references = item.references
             if word in references:
-                item_reference = references[
-                    0]  # the first item in object/location's references is always official name of object
+                item_reference = references[0]  # the first item in object/location's references is always official name of object
                 if typ == 'OBJ':
                     return item_reference
                 elif typ == 'ACT':
@@ -241,13 +240,13 @@ class Omnipotent:
         tagged = []
         for word in command:
             direction = Omnipotent.check_for_dir(word)
-            verb_result = Omnipotent.check_for_verb(word)
+            verb = Omnipotent.check_for_verb(word)
             location = Omnipotent.check_for_item(word, typ='LOC')
             object = Omnipotent.check_for_item(word, typ='OBJ')
             actor = Omnipotent.check_for_item(word, typ='ACT')
             if direction:
                 tagged.append((word, 'DIR'))
-            elif verb_result:
+            elif verb:
                 tagged.append((word, 'VB'))
             elif location:
                 tagged.append((word, 'LOC'))
@@ -258,6 +257,8 @@ class Omnipotent:
             elif pos_tag([word])[0][1] == 'IN':  # NLTK pos_tag, argument is list, index 0 is the tuple inside the list,
                 # index 1 is second item of tuple, which is the part of speech.
                 tagged.append((word, 'PRP'))
+            elif word == 'and':
+                tagged.append((word, 'AND'))
         return tagged
         # Omnipotent.get_command(tagged)
 
@@ -274,11 +275,14 @@ class Object:
         self.info = obj_dict
         self.name = obj_name
 
-        self.references = 'references'
-        self.description = 'description'
-        self.weight = 'weight'
-        self.damage = 'damage'
-        self.location = 'active_location'
+        self.references = obj_dict['references']
+        self.description = obj_dict['description']
+        self.damage = obj_dict['damage']
+        self.location = obj_dict['active_location']
+        try:
+            self.weight = obj_dict['weight']
+        except KeyError:
+            pass
 
 
 class Container(Object):
@@ -299,7 +303,10 @@ class ComplexObject(Object):
             value = self.states[state]
             self.__setattr__(state, value)  # set custom object attributes based on the given states
         self.sc_reactions = obj_dict['reactions']['state_changes']
-        self.cmd_reactions = obj_dict['reactions']['commands']
+        try:
+            self.cmd_reactions = obj_dict['reactions']['commands']
+        except KeyError:
+            pass
 
     def change_state(self, state):
         """Changes active state of object based on user's command or other circumstance."""
@@ -310,27 +317,43 @@ class ComplexObject(Object):
         #     print(self.sc_reactions['exceptions']
         #           [player.active_location][new_state])
 
-    def react_to_state_change(self, state, boolean):
-        """React to a state change
-        :param state: The object's state that is being changed
-        :param boolean: The boolean value that the state is being change to
+    def print_test(self):
+        print('test passed')
+
+    def react(self, typ, state_or_cmd, boolean=None):
+        """React to a state change or command
+        :param state_or_cmd: The object's state that is being changed or the command that is being invoked
+        :param boolean: The boolean value that the state is being change to. Only passed in for a state change reaction.
+        :param typ: Either 'state change' or 'command'
         """
-        if self.sc_reactions[state].get('general'):  # could also use 'exceptions' for this. If there is a 'general' key
-            # that means there is a general/exceptions pair.
-            reaction = exceptions_handler(self.sc_reactions[state], typ='state change')
-            general = self.sc_reactions[state]['general'][boolean]
-            if not reaction:  # if none of the conditions are met and exceptions_handler() returns None
+        if typ == 'state change':
+            dictionary = self.sc_reactions
+            has_exceptions = True if dictionary[state_or_cmd].get('general') else False
+        elif typ == 'command':
+            dictionary = self.cmd_reactions
+            has_exceptions = True if type(dictionary[state_or_cmd]) is dict else False
+
+        if has_exceptions:
+            reaction = exceptions_handler(dictionary[state_or_cmd], typ=typ)
+            general = dictionary[state_or_cmd]['general']
+            if typ == 'state change':
+                general = general[boolean]
+            if not reaction:
                 print(general)
             else:
-                if not reaction.get(boolean):  # if the get() function returns None because the boolean key doesn't exist
-                    print(general)
-                else:  # if the conditions are met
-                    print(reaction[boolean])
-        else:  # if there is just one set reaction set no matter any outside state
-            print(self.sc_reactions[state][boolean])
-
-    def react_to_command(self, command):
-        """React to a given command."""
+                if typ == 'state change':
+                    if not reaction.get(boolean):
+                        print(general)
+                    else:
+                        print(reaction[boolean])
+                else:
+                    print(reaction)
+        else:
+            if typ == 'state change':
+                print(dictionary[state_or_cmd][boolean])  # there will always be both a True and False reaction, so
+                # [boolean] won't fail / raise an exception
+            else:
+                print(dictionary[state_or_cmd])
 
 
 class Actor(ComplexObject):
@@ -429,17 +452,30 @@ class Player:
             location = LOCATIONS[self.active_location]
             location.objects.append(reference)
 
-    def goto(self, new_location):
-        print('Going to:', new_location)
-        self.active_location = new_location
-        LOCATIONS[new_location].narrate()
-        LOCATIONS[new_location].visited += 1
+    def goto(self, *locations):
+	    if len(locations) > 1:
+		    for new_location in locations:
+		        print('Going to:', new_location)
+		        self.active_location = new_location
+		        LOCATIONS[new_location].narrate()
+		        LOCATIONS[new_location].visited += 1
+
+    def attack(self, actor, with_object):
+        pass
+
+    def speak(self, to_actor):
+        """Converse with an actor. This might be complicated, but I will try to make it super simple."""
+        pass
 
     # def inflict_damage (self, damage):
     #     self.health -= damage
     #
-    # def turn (self, direction):
-    #     self.orientation = direction
+    def turn(self, direction):
+        """Turn in a given direction"""
+        self.orientation = direction
+
+    def activate_func(self, func, *args):
+        getattr(self, func)(args)
 
     def __str__(self):
         return ('I am a player in this game. I am currently in location ' + self.active_location[-1]
@@ -482,36 +518,40 @@ actualize_data('ACTORS', setup.obj_filename)
 
 
 def test_state_changes():
+
     print('---NEW---')
     print('changing lantern lit to True')
-    OBJECTS['lantern'].react_to_state_change('lit', True)
+    OBJECTS['lantern'].react('state change', 'lit', False)
     
     print('\n---NEW---')
     print('changing lantern lit to False')
-    OBJECTS['lantern'].react_to_state_change('lit', False)
+    OBJECTS['lantern'].react('state change', 'lit', False)
     
     player.active_location = '6a'
     print('changed player location to 6a')
     
     print('\n---NEW---')
     print('changing lantern lit to False')
-    OBJECTS['lantern'].react_to_state_change('lit', False)
+    OBJECTS['lantern'].react('state change', 'lit', False)
     print('\n---NEW---')
     print('changing lantern lit to True')
-    OBJECTS['lantern'].react_to_state_change('lit', True)
+    OBJECTS['lantern'].react('state change', 'lit', True)
     print('\n---NEW---')
     player.active_location = '4a'
     exceptions_handler(LOCATIONS['4a'].narratives['long'], 'narrative')
 
+    print('\n---NEW---')
+    print('reacting to take command')
+    OBJECTS['lantern'].react('command', 'take')
 
-#
-# def react_to_state_change (self, state, boolean):
-#     """React to a state change"""
-#     exceptions = self.sc_reactions[state]['exceptions']
-#     for item in exceptions:
-#         for exception in exceptions[item]:
-#             print(exception, '|', exception[0])
-# pprint.pprint(commands)
+    print('\n---NEW---')
+    print('reacting to throw command')
+    OBJECTS['lantern'].react('command', 'throw')
+
+    player.active_location = '5'
+    print('\n---NEW---')
+    print('reacting to throw command')
+    OBJECTS['lantern'].react('command', 'throw')
 
 
 def gameplay():
@@ -526,6 +566,7 @@ if __name__ == '__main__':
 
     player = Player()
     test_state_changes()
+    player.activate_func('take')
     gameplay()
     # player.inventory.append('egg')
     try:
