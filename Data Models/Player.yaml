@@ -1,1 +1,14 @@
-can_walk: False
+PLAYER:
+  starting_location: '0'
+  orientation: 'N'
+  inventory: [hand, leg]
+  health: 100
+  legs_work: False
+  OBJECTS:
+    hand:
+      references: [arms, hands, arm, hand, fist, fists]
+      damage: 3
+    leg:
+      references: [leg, legs, foot, feet]
+      damage: 5
+    

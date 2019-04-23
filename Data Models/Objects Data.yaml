@@ -73,29 +73,19 @@ ACTORS:
   troll:
     references: [troll, ugly]
     description: a large ugly troll
-    active_state: guarding
     active_location: 4a
-    weight: None
     damage: 17
     health: 100
+    can_talk: False
 
     states:
       guarding: True
-      hairy: False
     
     # messages:
     reactions:
       state_changes:
-        not_guarding: The troll ambles away, shoulders drooping.
-      attr_changes:
-        health:
-          40: [change_state, guarding]
-          0:  
-      commands:
-        take: You pick up the lantern and brush off the dust covering the stained 
-            glass sides. It looks like it has been here for a while.
-        drop: &drop
-        throw: You throw the lantern and it falls with a clatter on the ground a few feet away.
-        #- attack: *unattackable
-        goto: *ungotoable
-    
+        guarding: The troll ambles away, shoulders drooping.
+
+    attribute_changes:
+      health:
+        40: [change_state, guarding]

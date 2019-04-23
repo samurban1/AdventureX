@@ -18,7 +18,11 @@ COMMANDS:
       ]
     forLOCATIONS: None
     forACTORS: None
+  function_maps: [
+    {verbs: [hit, strike, punch], map: [attack, <actor>, hand]}
+  ]
 
+  stopwords: [use, utilize]
   unprovided:
     object: <verb> what?
     verb: What about the <object>?

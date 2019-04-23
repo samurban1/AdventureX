@@ -176,7 +176,7 @@ LOCATIONS:
       long:
         general: You get to the other side. Yay. To be continued.
         exceptions:
-          4b: [[if: [visited, 0],
+          4b: [[if: [4b, visited, 0],
             narrative: Walking steadily across the wooden planks, you notice a figure at the other
               side -- a classically bearded, tall man, robed in silver-grey folds standing
               proud, watching you cross; almost like he is guarding the other side of the
