@@ -1,6 +1,7 @@
 """GUI to easily create game."""
 
 from tkinter import *
+from tkinter.font import Font
 import tkinter.messagebox, tkinter.ttk as ttk
 from pyautogui import press, hotkey
 from ttkthemes import ThemedTk
@@ -16,6 +17,14 @@ class Display:
 		self.root.title('Create Adventure')
 		# self.center(self.root)
 
+		times = Font(family="Helvetica", size=9)
+
+		self.pane = PanedWindow(self.root, bg='grey', bd=4, orient=VERTICAL, width=300)
+		self.pane.pack(fill=BOTH, expand=1, side=LEFT)
+		self.output = Text(self.pane, height=15, width=15, font=times)
+		self.pane.add(self.output)
+		self.output.insert(INSERT, 'Add notes here.\nAutomatic dictionary updates will be outputted here too.\n')
+
 		self.tabControl = ttk.Notebook(self.root)
 
 		# Create 3 tabs for: locations, objects, and commands
@@ -25,14 +34,15 @@ class Display:
 
 		# Add tabs to ttk.Notebook
 		self.tabControl.add(self.locTab, text='Locations')
-		self.tabControl.add(self.objTab, text='Objects')
 		self.tabControl.add(self.cmdTab, text='Commands')
+		self.tabControl.add(self.objTab, text='Objects')
 
 		self.tabControl.pack(expand=1, fill=BOTH)
 
 		self.tabControl.bind("<<NotebookTabChanged>>", self.change_cur_DICT)
 
 		self.objTab.bind("<Visibility>", self.create_object_stuff)  # this is only for the first time it opens the Objects tab
+		self.tabControl.tab(2, state=DISABLED)
 
 		self.row_counter = 0  # to keep track of the rows
 		self.LOCATIONS = {}
@@ -43,21 +53,30 @@ class Display:
 		self.cur_DICT = 'LOCATIONS'
 
 		self.create_location_stuff()
-		print(self.tabControl.tab(self.tabControl.select(), "text"))
+		self.print(self.tabControl.tab(self.tabControl.select(), "text"))
 
 		self.root.mainloop()
+
+	def print(self, *text):
+		all_text = ''
+		try:
+			text = ' '.join(text)
+		except TypeError:
+			for t in text:
+				all_text += str(t) + ' '
+		self.output.insert(INSERT, str(text)+'\n')
 
 	def change_cur_DICT(self, event):
 		"""Updates the current dictionary."""
 		curTab = self.tabControl.tab(self.tabControl.select(), "text")
-		print('current tab:', curTab)
+		self.print('current tab:', curTab)
 		if curTab == 'Locations':
 			self.cur_DICT = 'LOCATIONS'
 			self.cur_itemID = getattr(self, 'LocNumEntry').get()
 		elif curTab == 'Objects':
 			self.cur_DICT = 'OBJECTS'
 			self.cur_itemID = getattr(self, 'ObjNameEntry').get()
-		print('current ITemID:', self.cur_itemID)
+		self.print('current itemID:', self.cur_itemID)
 		self.tabControl.focus()
 
 	def add_entry(self, tab_obj, var_name, label_text, column, sticky=W+E+N+S, anchor='w', header=False):
@@ -77,30 +96,28 @@ class Display:
 
 			item_ID = self.cur_itemID  # this will be either a location number, object name, or actor name
 			dictionary = getattr(self, self.cur_DICT)  # use cur_DICT string to get the attribute by the name of the string
-			print('dictionaryyy in add_entry:', dictionary)
-			print('item IDDDD:', item_ID)
+			# self.print('Dictionary:', dictionary)
+			self.print('item ID:', item_ID)
 
 			if dictionary is self.LOCATIONS:
-				print('varname in if dict is self locations:', var_name)
+				# self.print('varname in if dict is self locations:', var_name)
 				string = getattr(self, var_name).get()  # get the text from tbe entry box.
 				if 'references' in var_name:
-					print('this is the item id in references if:', item_ID, 'and the self.id:', self.cur_itemID)
+					# self.print('this is the item id in references if:', item_ID, 'and the self.id:', self.cur_itemID)
 					dictionary[item_ID]['visited'] = 0
 					references = [reference.strip() for reference in string.split(',')]  # split by command and strip whitespaces
 					dictionary[item_ID]['references'] = references  # put it in references
-					print('this is the string:', string)
-					print('{}[{}]["references"] = (references:)', references)
+					self.print('Entered string:', string)
+					# self.print('{}[{}]["references"] = (references:)', references)
 
 				elif var_name == 'can_enter':
 					if string == 'always':
 						dictionary[item_ID][var_name] = string
 					else:
-						condition_sets = string.split('.')
-						all_conditions = []
-						for cond_set in condition_sets:
-							condition = [item.strip() for item in cond_set.split(',')]
-							all_conditions.append(condition)
-						dictionary[item_ID][var_name] = all_conditions
+						condition = self.string2value_list(string)
+						self.enter_conditions.append(condition)
+						dictionary[item_ID][var_name] = self.enter_conditions
+						getattr(self, 'add_enter_cond').invoke()
 
 				elif var_name == 'long_nar' or var_name == 'short_nar':
 					if 'NARRATIVES' in dictionary[item_ID]:
@@ -117,32 +134,31 @@ class Display:
 					dictionary[item_ID]['MOVES'][var_name] = string
 
 				else:
-					print('doing the else')
+					self.print('Doing the else')
 					dictionary[item_ID][var_name] = string
 
-				print('dictionary in if dict is self locations:', self.LOCATIONS)
+				self.print('Dictionary after adding\n:', self.LOCATIONS)
 
 			elif dictionary is self.OBJECTS:
-				print('varname in if dict is self locations:', var_name)
+				# self.print('varname in if dict is self locations:', var_name)
 				string = getattr(self, var_name).get()  # get the text from tbe entry box.
 				if 'references' in var_name:
-					print('this is the item id in references if:', item_ID, 'and the self.id:', self.cur_itemID)
+					# self.print('this is the item id in references if:', item_ID, 'and the self.id:', self.cur_itemID)
 					references = [reference.strip() for reference in string.split(',')]  # split by command and strip whitespaces
 					dictionary[item_ID]['references'] = references  # put it in references
-					print('this is the string:', string)
-					print('{}[{}]["references"] = (references:)', references)
+					self.print('Entered string:', string)
+					# self.print('{}[{}]["references"] = (references:)', references)
 				else:
 					dictionary[item_ID][var_name] = string
 
-
-			print('entry text:', getattr(self, var_name).get())
+			# self.print('entry text:', getattr(self, var_name).get())
 
 			# dictionary[item_ID][var_name] = getattr(self, var_name).get()
-			print('dictionary above tab:', dictionary)
+			# self.print('dictionary above tab:', dictionary)
 			#
 			# setattr(self, var_name+'_attr', getattr(self, var_name).get())  # set attribute called whatever the entry name is
 			# # to whatever the user typed into entry box.
-			# print(getattr(self, var_name+'_attr'))
+			# self.print(getattr(self, var_name+'_attr'))
 
 			press('tab')
 			# getattr(self, var_name).delete(0, END)
@@ -170,17 +186,6 @@ class Display:
 	def add_button(self, tab_obj, btn_var, entry_var, text, row, column):
 		"""Adds a button."""
 
-		def exception_entry_handler(event):
-
-			string = getattr(self, entry_var).get()
-			exception_set = self.string2value(string)
-
-			print(exception_set)
-			# self.all_conditions.append(exception_set)
-			# print(self.all_conditions)
-
-			getattr(self, btn_var).invoke()
-
 		def click_handler():
 			getattr(self, entry_var).delete(0, END)
 
@@ -189,7 +194,7 @@ class Display:
 		getattr(self, btn_var).grid(row=row, column=column, padx=5, pady=5, sticky=W)
 
 	@staticmethod
-	def string2value(string):
+	def string2value_list(string):
 
 		def to_value (item):
 			try:
@@ -224,7 +229,7 @@ class Display:
 		def checkbox_handler():
 			"""Enables/disables entries/buttons."""
 			variable = getattr(self, bool_name).get()
-			print('check click bool for', bool_name, ':', variable)
+			# self.print('check click bool for', bool_name, ':', variable)
 
 			if not variable:
 				getattr(self, entry_name).insert(0, 'Split condset items w commas')
@@ -232,7 +237,7 @@ class Display:
 					try:
 						getattr(self, item).config(state=DISABLED)
 					except Exception as e:
-						print(e)
+						self.print(e)
 						continue
 
 			else:
@@ -240,7 +245,7 @@ class Display:
 					try:
 						getattr(self, item).config(state=NORMAL)
 					except Exception as e:
-						print(e)
+						self.print(e)
 						continue
 				getattr(self, entry_name).delete(0, END)
 				getattr(self, text_name).delete(0, END)
@@ -257,10 +262,10 @@ class Display:
 		def exception_entry_handler(event):
 
 			string = getattr(self, entry_name).get()
-			exception_set = self.string2value(string)
+			exception_set = self.string2value_list(string)
 
 			self.all_conditions.append(exception_set)
-			print(self.all_conditions)
+			self.print('All conditions var:', self.all_conditions)
 
 			getattr(self, cond_button_name).invoke()
 
@@ -290,7 +295,7 @@ class Display:
 			getattr(self, entry_name).config(state=DISABLED)
 			getattr(self, entry_name).bind('<Return>', exception_entry_handler)
 
-			print("'exception' in var_name, which is:", var_name)
+			# self.print("'exception' in var_name, which is:", var_name)
 			setattr(self, cond_button_name, Button(tab_obj, text='Add Condition', state=DISABLED, padx=6, pady=6,
 																		command=add_condition, highlightbackground='#5FD052', fg='black'))
 			getattr(self, cond_button_name).grid(row=self.row_counter, column=column+1, padx=5, pady=5, sticky=W)
@@ -324,8 +329,8 @@ class Display:
 			setattr(self, dic, {})
 			self.cur_itemID = getattr(self, entry_var).get()
 			getattr(self, dic)[self.cur_itemID] = {}
-			print(getattr(self, dic))
-			print('cur_itemID:', self.cur_itemID)
+			self.print('Current dict:', getattr(self, dic))
+			self.print('cur_itemID:', self.cur_itemID)
 			press('tab')
 
 		self.cur_DICT = dic
@@ -352,7 +357,7 @@ class Display:
 		if result:
 			dictionary = getattr(self, self.cur_DICT)
 			dictionary[self.cur_itemID] = {}
-			print(dictionary)
+			self.print(dictionary)
 
 	def save(self):
 		filename = '/Users/Sam/Documents/Shalhevet/CompSci/CompSci Work/Capstone/Github/AdventureX/Framework/Location Data.yaml'
@@ -360,7 +365,7 @@ class Display:
 		# 	dictionary = yaml.load(infile)
 		with open(filename, 'a') as outfile:
 			# dictionary[self.cur_DICT][self.cur_itemID] = getattr(self, self.cur_DICT)
-			print(getattr(self, self.cur_DICT))
+			self.print(getattr(self, self.cur_DICT))
 			# ruamel.yaml.dump(getattr(self, self.cur_DICT), outfile, default_flow_style=False)
 			dictionary = getattr(self, self.cur_DICT)
 			yaml.dump({self.cur_itemID: OrderedDict(dictionary[self.cur_itemID])}, outfile, Dumper=yamlordereddictloader.Dumper, default_flow_style=None)
@@ -374,13 +379,13 @@ class Display:
 
 		self.setup(self.locTab, 'LOCATIONS', 'LocNumWarning', 'LocNumTitle', 'LocNumEntry', 'Location Number --->')
 
+		self.enter_conditions = []
 		loc_entries = [('name', 'NAME:'), ('loc_references', 'REFERENCES: (split by comma)'), ('can_enter', 'CAN ENTER: (split cond_set items by commas)')]
 		for var_name, text in loc_entries:
 			self.add_entry(self.locTab, var_name=var_name, label_text=text, column=0)
-			print('row:', self.row_counter, var_name)
+			self.print('row:', self.row_counter, var_name)
 
 		self.add_button(self.locTab, 'add_enter_cond', entry_var='can_enter', text='Add enter condition', row=self.row_counter-1, column=2)
-		print('rowp:', self.row_counter)
 
 		ttk.Separator(self.locTab, orient=HORIZONTAL).grid(row=self.row_counter, sticky=NSEW, rowspan=1, columnspan=4)
 
@@ -394,19 +399,24 @@ class Display:
 		self.row_counter = 8
 
 		self.add_label(self.locTab, 'moves', 'MOVES', column=2, two_rows=False, header=(True, True), bg='#F9CE5F')
-		print('under moves line:', self.row_counter)
+		# self.print('under moves line:', self.row_counter)
 
 		move_entries = [('N', 'North takes player to:'), ('E', 'East takes player to:'), ('S', 'South takes player to:'), ('W', 'West takes player to:')]
 		for var_name, text in move_entries:
 			self.add_entry(self.locTab, var_name=var_name, label_text=text, column=2)
 
 		self.add_entry(self.locTab, 'objects', 'OBJECTS', column=2, header=True)
-		print('under objects line:', self.row_counter)
+		# self.print('under objects line:', self.row_counter)
 		self.row_counter += 1
 		self.add_entry(self.locTab, var_name='auto_changes', label_text='Automatic changes upon arrival: (split item_attribute_set by commas)', column=2)
 
 		self.add_clear_button(self.locTab, 'locClearBtn')
 		self.add_finish_button(self.locTab, 'locFinishBtn')
+
+		#
+		# a = Entry(self.locTab, bg='white', width=10)
+		# a.grid(row=self.row_counter+1, column=2)
+
 
 	def create_object_stuff(self, event):
 		"""Creates the object stuff."""
@@ -417,7 +427,7 @@ class Display:
 
 		def choice_handler():
 			typ = typ_choice.get()
-			print('object type:', typ)
+			self.print('Object type:', typ)
 
 		typ_choice = StringVar(self.objTab)
 		typ_choice.set('Object TYPE')
