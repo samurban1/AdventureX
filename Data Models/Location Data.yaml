@@ -162,6 +162,7 @@ LOCATIONS:
       S: &S {warning: "You sure you want to jump over the bridge? You will most definitely crack your head on a rock below.",
             yes: 10d, no: null}
       W: &W '4'
+    OBJECTS: [troll]
     COMMANDS: [
         {verbs: [jump, suicide], action: [goto, *S]}
       ]

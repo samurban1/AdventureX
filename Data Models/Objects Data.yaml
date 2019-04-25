@@ -27,6 +27,10 @@ OBJECTS:
     damage: 0
     weight: 4
 
+    reactions:
+      commands:
+        throw: You throw the egg yay. IT breaks.
+
   lantern:
     type: COMPLEX
     references: [lantern, light, brass]
@@ -55,8 +59,8 @@ OBJECTS:
                         False: 'The light flickers off, and it becomes harder to see.'}]
 
             - [if: [[troll, guarding, True], [player, active_location, 4a]],
-              reaction: {True: The troll's power stops the light from turning on.}]  
-                
+              reaction: {True: The troll's power stops the light from turning on.}]
+
       commands:
         take: You pick up the lantern and brush off the dust covering the stained 
             glass sides. It looks like it has been here for a while.
@@ -71,21 +75,72 @@ ACTORS:
   # actors don't have a weight, it doesn't really matter how heavy they are
   # because you're not throwing them at something as you don't have control over them.
   troll:
+    type: Violent
     references: [troll, ugly]
     description: a large ugly troll
     active_location: 4a
     damage: 17
     health: 100
+    attack: True
     can_talk: False
 
     states:
       guarding: True
-    
+      health:
+
     # messages:
     reactions:
       state_changes:
-        guarding: The troll ambles away, shoulders drooping.
-
-    attribute_changes:
-      health:
-        40: [change_state, guarding]
+        guarding:
+          False: It ambles away, shoulders drooping.
+        health:
+          # see Player.yaml for explanation as to the unusual format of this state_change dictionary.
+          general: The troll receives damage. Well done. Soon enough and he might be too weak to, you know....
+          exceptions:
+          - [if: [[player, active_weapon, knife]],
+            reaction: You lunge at the troll with the sharp blade of your knife.]
+          - [if: [[troll, damage_received, 'range(90,100)']],
+            reaction: 'The troll is definitely not happy, he is not used to being challenged.']
+          - [if: [[troll, health, 'range(81,90)']],
+            reaction: 'The troll is definitely not used to being challenged like this. 
+                      He is not happy that he lost the life that he did.']
+          - [if: [[troll, health, 'range(69,81)']],
+            reaction: 'Do you ']
+          actions: [troll, change_state, guarding]
+ 
+      attack:
+        effect: [
+          {if: ['range(1,7)'],
+          message: [The troll lunges at you and scratches your face, 
+                    The troll swipes at you and you fall to the ground.]},
+          {if: ['range(7,15)'],
+          message: [The troll gives you a medium attack.]},
+          {if: ['range(15,25)'],
+          message: [The troll pummels you to the ground and smacks your head in.,
+                    The troll pulls you like the bear did in the Revenant™]}
+                  ]
+        response:
+          actions: [[troll, attack, 'range(1,25)']]
+          message: [
+            {if: ['range(1,7)'],
+            message: [The troll lunges at you and scratches your face, 
+                      The troll swipes at you and you fall to the ground.]},
+            {if: ['range(7,15)'],
+            message: [The troll gives you a medium attack.]},
+            {if: ['range(15,25)'],
+            message: [The troll pummels you to the ground and smacks your head in.,
+                      The troll pulls you like the bear did in the Revenant™]}
+                    ]
+      
+      receive:
+        egg:
+          reaction:
+            general: The troll gently reaches out and takes the egg from your hand. 
+              It examines the egg, turning it over in its large hands. Looking satisfied, the troll
+              steps aside, allowing you to cross.
+            exceptions:
+              - [if: [[troll, health, 'range(30,99)']],
+                reaction: "The troll, breathing heavily from fighting, relaxes it's posture and slowly reaches out to take the egg.
+                    It examines the egg, turning it over in its large hands. Looking satisfied, the troll
+                    steps aside, allowing you to cross."]
+          actions: [[troll, change_state, guarding], [4a, remove_object, troll]]

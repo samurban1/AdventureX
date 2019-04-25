@@ -13,7 +13,7 @@ COMMANDS:
   custom_commands:
     forOBJECTS:
       lantern: [
-        {verbs: [on, light, turn on], action: [change_state, light_on]},
+        {verbs: [on, turn on], action: [change_state, light_on]},
         {verbs: [off, turn off], action: [change_state, light_off]},
       ]
     forLOCATIONS: None
