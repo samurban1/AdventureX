@@ -15,9 +15,12 @@ def get_data(filename):
     return dic
 
 
-loc_filename = '/Users/Sam/Documents/Shalhevet/CompSci/CompSci Work/Capstone/Github/AdventureX/Data Models/Location Data.yaml'
-obj_filename = '/Users/Sam/Documents/Shalhevet/CompSci/CompSci Work/Capstone/Github/AdventureX/Data Models/Objects Data.yaml'
-cmd_filename = '/Users/Sam/Documents/Shalhevet/CompSci/CompSci Work/Capstone/Github/AdventureX/Data Models/Commands.yaml'
+main_filename = '/Users/Sam/Documents/Shalhevet/CompSci/CompSci Work/Capstone/Github/AdventureX/Data Models/'
+loc_filename = main_filename + 'Location Data.yaml'
+obj_filename = main_filename + 'Objects Data.yaml'
+cmd_filename = main_filename + 'Commands.yaml'
+player_filename = main_filename + 'Player.yaml'
+
 warnings.simplefilter("ignore", error.ReusedAnchorWarning)
 
 if __name__ == '__main__':
