@@ -2,15 +2,15 @@ class ObjectError(Exception):
     pass
 
 
-class TakeObjectError(Exception):
+class AlreadyHoldingError(Exception):
     pass
 
 
-class DropObjectError(Exception):
+class NotHoldingError(Exception):
     pass
 
 
-class NoSuchVerbError(Exception):
+class VerbError(Exception):
     pass
 
 
