@@ -17,16 +17,15 @@ class Display:
 		self.root.title('Create Adventure')
 		# self.center(self.root)
 
-		times = Font(family="Helvetica", size=9)
+		times = Font(family="Helvetica", size=11)
 
-		self.pane = PanedWindow(self.root, bg='grey', bd=4, orient=VERTICAL, width=300)
+		self.pane = PanedWindow(self.root, bg='grey', bd=4, orient=VERTICAL, width=300, sashcursor="sb_h_double_arrow")
 		self.pane.pack(fill=BOTH, expand=1, side=LEFT)
 		self.output = Text(self.pane, height=15, width=15, font=times)
 		self.pane.add(self.output)
-		self.output.insert(INSERT, 'Add notes here.\nAutomatic dictionary updates will be outputted here too.\n')
+		self.output.insert(INSERT, 'Add notes here.\nAutomatic dictionary updates will be outputted here too.\n\n')
 
 		self.tabControl = ttk.Notebook(self.root)
-
 		# Create 3 tabs for: locations, objects, and commands
 		self.locTab = ttk.Frame(self.tabControl)
 		self.objTab = ttk.Frame(self.tabControl)
@@ -58,13 +57,28 @@ class Display:
 		self.root.mainloop()
 
 	def print(self, *text):
-		all_text = ''
-		try:
-			text = ' '.join(text)
-		except TypeError:
-			for t in text:
-				all_text += str(t) + ' '
-		self.output.insert(INSERT, str(text)+'\n')
+		if 'Dictionary after' in text[0]:
+			self.print('\n{}[\'{}\'] as is:'.format(self.cur_DICT, self.cur_itemID))
+			dictionary = getattr(self, self.cur_DICT)[self.cur_itemID]
+			for key in dictionary:
+				# STILL NEED TO FIX THIS OUTPUT, STILL VERY UGLY
+				if type(dictionary[key]) is dict:
+					for sub_key in dictionary[key]:
+						if type(dictionary[key][sub_key]) is dict:
+							for dub_sub_key in dictionary[key][sub_key]:
+								self.output.insert(INSERT, '{}:\n  {}: {}\n'.format(sub_key, dub_sub_key, dictionary[key][sub_key][dub_sub_key]))
+						else:
+							self.output.insert(INSERT, '{}:\n  {}: {}\n'.format(key, sub_key, dictionary[key][sub_key]))
+				else:
+					self.output.insert(INSERT, '{}: {}\n'.format(key, dictionary[key]))
+		else:
+			all_text = ''
+			try:
+				all_text = ' '.join(text)
+			except TypeError:
+				for t in text:
+					all_text += str(t) + ' '
+			self.output.insert(INSERT, all_text+'\n')
 
 	def change_cur_DICT(self, event):
 		"""Updates the current dictionary."""
@@ -137,7 +151,7 @@ class Display:
 					self.print('Doing the else')
 					dictionary[item_ID][var_name] = string
 
-				self.print('Dictionary after adding\n:', self.LOCATIONS)
+				self.print('Dictionary after adding:', '\n', self.LOCATIONS)
 
 			elif dictionary is self.OBJECTS:
 				# self.print('varname in if dict is self locations:', var_name)
@@ -416,7 +430,7 @@ class Display:
 		#
 		# a = Entry(self.locTab, bg='white', width=10)
 		# a.grid(row=self.row_counter+1, column=2)
-
+	# 
 
 	def create_object_stuff(self, event):
 		"""Creates the object stuff."""
