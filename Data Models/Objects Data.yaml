@@ -12,29 +12,40 @@ OBJECTS:
     type: CONTAINER
     references: [backpack, bag, sack, pack, knapsack]
     description: A brown linen durable backpack capable of holding up to 55 lbs.
+    short_desc: a brown linen backpack
     active_location: '10'
     inventory: []
     weight: 3
     damage: 5
+
+  knife:
+    type: SIMPLE
+    references: [knife, blade, dagger]
+    description: An 7-inch silver blade sitting atop a matte-black handle, engraved with the head of a sheep.
+    short_desc: a silver knife
+    active_location: 
 
 
   egg:
     type: SIMPLE
     references: [egg, silver egg]
     description: A large silver egg, weighing about 5 lbs.
-    loc_description: A large silver egg lays on the floor.
+    short_desc: a large silver egg
     active_location: 6a
     damage: 0
     weight: 4
 
     reactions:
       commands:
-        throw: You throw the egg yay. IT breaks.
+        throw:
+          general: You throw the egg yay. IT breaks.
+          actions: [[remove_from_game, egg]]
 
   lantern:
     type: COMPLEX
     references: [lantern, light, brass]
     description: A brass lantern with clouded glass doors and a curved black handle.
+    short_desc: a brass lantern
     weight: 6
     damage: 10
     active_location: 6a
@@ -68,7 +79,7 @@ OBJECTS:
           general: You throw the lantern and it falls with a clatter on the ground a few feet away.
           exceptions:
             - [if: [[troll, guarding, True], [player, active_location, 4a]],
-              reaction: You throw the lantern and the troll runs away, scared.]  
+              reaction: "You throw the lantern and the troll runs away, scared."]  
         #- attack: *unattackable
 
 ACTORS:
@@ -107,18 +118,19 @@ ACTORS:
           - [if: [[troll, health, 'range(69,81)']],
             reaction: 'Do you ']
           actions: [troll, change_state, guarding]
- 
+
       attack:
-        effect: [
+        damage_received: [
           {if: ['range(1,7)'],
-          message: [The troll lunges at you and scratches your face, 
-                    The troll swipes at you and you fall to the ground.]},
+          message: ["The troll staggers, seeming like he is about to lose his footing, but he
+                    grounds himself, ready to continue to take you on."]},
           {if: ['range(7,15)'],
           message: [The troll gives you a medium attack.]},
           {if: ['range(15,25)'],
           message: [The troll pummels you to the ground and smacks your head in.,
                     The troll pulls you like the bear did in the Revenant™]}
                   ]
+
         response:
           actions: [[troll, attack, 'range(1,25)']]
           message: [
@@ -126,7 +138,9 @@ ACTORS:
             message: [The troll lunges at you and scratches your face, 
                       The troll swipes at you and you fall to the ground.]},
             {if: ['range(7,15)'],
-            message: [The troll gives you a medium attack.]},
+            message: ["The troll takes his stick and rams it into your stomach. You fall over, gasping for breath.
+                      You know, it's really not a good idea to fight this thing. Why fight when you can go another,
+                      more peaceful, route?"]},
             {if: ['range(15,25)'],
             message: [The troll pummels you to the ground and smacks your head in.,
                       The troll pulls you like the bear did in the Revenant™]}
@@ -139,7 +153,7 @@ ACTORS:
               It examines the egg, turning it over in its large hands. Looking satisfied, the troll
               steps aside, allowing you to cross.
             exceptions:
-              - [if: [[troll, health, 'range(30,99)']],
+              - [if: [[troll, health, 'range(30,100)']],
                 reaction: "The troll, breathing heavily from fighting, relaxes it's posture and slowly reaches out to take the egg.
                     It examines the egg, turning it over in its large hands. Looking satisfied, the troll
                     steps aside, allowing you to cross."]

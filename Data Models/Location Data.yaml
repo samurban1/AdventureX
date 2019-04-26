@@ -47,92 +47,92 @@ LOCATIONS:
 
 ####### LEVEL 1 #######
 
-  # '0':
-  #   name: homeTrunk
-  #   references: ['home', 'trunk', 'start']
-  #   visited: 0
-  #   can_enter: always
-  #   NARRATIVES:
-  #     long: You are inside the trunk that you first woke up in -- a tree trunk with a wide entrance that allows 
-  #       you to fit inside. Nearby is the sound of rushing water, to your right, or east, is the edge of a cliff.
-  #     short: You are back in the tree trunk.
-  #   MOVES:
-  #     N: &N '1'
-  #     E: &E '3'
-  #     S: &S '5'
-  #     W: &W '7'
-  #     move_commands: [
-  #       {verbs: [exit, out, leave], direction: N},
-  #       {verbs: [behind], direction: S}
-  #     ]
+  '0':
+    name: homeTrunk
+    references: ['home', 'trunk', 'start']
+    visited: 0
+    can_enter: always
+    NARRATIVES:
+      long: You are inside the trunk that you first woke up in -- a tree trunk with a wide entrance that allows 
+        you to fit inside. Nearby is the sound of rushing water, to your right, or east, is the edge of a cliff.
+      short: You are back in the tree trunk.
+    MOVES:
+      N: &N '1'
+      E: &E '3'
+      S: &S '5'
+      W: &W '7'
+      move_commands: [
+        {verbs: [exit, out, leave], direction: N},
+        {verbs: [behind], direction: S}
+      ]
 
-  # '1':
-  #   name: inFrontHome
-  #   visited: 0
-  #   can_enter: always
-  #   NARRATIVES:
-  #     long: Your home trunk is now behind you. All around you are closely-knit clusters
-  #       of trees, but to your west there seems to be a clearing of some sorts.
-  #     short: You're in front (and outside) of your home trunk.
-  #   OBJECTS:
-  #   MOVES:
-  #     N: &N boundary
-  #     E: &E '2'
-  #     S: &S '0'
-  #     W: &W '8'
-  #     move_commands: [
-  #       {verbs: [exit, out, leave], direction: N},
-  #       {verbs: [behind], direction: S}
-  #       ]
+  '1':
+    name: inFrontHome
+    visited: 0
+    can_enter: always
+    NARRATIVES:
+      long: Your home trunk is now behind you. All around you are closely-knit clusters
+        of trees, but to your west there seems to be a clearing of some sorts.
+      short: You're in front (and outside) of your home trunk.
+    OBJECTS:
+    MOVES:
+      N: &N boundary
+      E: &E '2'
+      S: &S '0'
+      W: &W '8'
+      move_commands: [
+        {verbs: [exit, out, leave], direction: N},
+        {verbs: [behind], direction: S}
+        ]
 
-  # '2':
-  #   name: cliffEdge0
-  #   visited: 0
-  #   can_enter: always
-  #   NARRATIVES:
-  #     long: You are at the edge of a cliff. Looking down, you see craggy rocks clinging
-  #       to the sides of the mountain wall, which leads down to a frothy white river.
-  #       Looking behind you, you see that a bridge is nearby, and it looks like it spans
-  #       the gap between your side of the cliff and the other.
-  #     short: You're at the edge of the cliff. A bridge is nearby.
-  #   OBJECTS:
-  #   MOVES:
-  #     N: &N boundary
-  #     E: &E '9'
-  #     S: &S '3'
-  #     W: &W '1'
+  '2':
+    name: cliffEdge0
+    visited: 0
+    can_enter: always
+    NARRATIVES:
+      long: You are at the edge of a cliff. Looking down, you see craggy rocks clinging
+        to the sides of the mountain wall, which leads down to a frothy white river.
+        Looking behind you, you see that a bridge is nearby, and it looks like it spans
+        the gap between your side of the cliff and the other.
+      short: You're at the edge of the cliff. A bridge is nearby.
+    OBJECTS:
+    MOVES:
+      N: &N boundary
+      E: &E '9'
+      S: &S '3'
+      W: &W '1'
 
-  # '3':
-  #   name: cliffEdge1
-  #   visited: 0
-  #   can_enter: always
-  #   NARRATIVES:
-  #     long: You are at the edge of a cliff. Looking down, you see craggy rocks clinging
-  #       to the sides of the mountain wall, which leads down to a frothy white river.
-  #       Looking behind you, you see that a bridge is nearby, and it looks like it spans
-  #       the gap between your side of the cliff and the other.
-  #     short: You are at the edge of the cliff, which leads down to a dangerous-looking
-  #       whitewater river. A bridge is nearby.
-  #   OBJECTS:
-  #   MOVES:
-  #     N: &N '2'
-  #     E: &E '9'
-  #     S: &S '4'
-  #     W: &W '0'
+  '3':
+    name: cliffEdge1
+    visited: 0
+    can_enter: always
+    NARRATIVES:
+      long: You are at the edge of a cliff. Looking down, you see craggy rocks clinging
+        to the sides of the mountain wall, which leads down to a frothy white river.
+        Looking behind you, you see that a bridge is nearby, and it looks like it spans
+        the gap between your side of the cliff and the other.
+      short: You are at the edge of the cliff, which leads down to a dangerous-looking
+        whitewater river. A bridge is nearby.
+    OBJECTS:
+    MOVES:
+      N: &N '2'
+      E: &E '9'
+      S: &S '4'
+      W: &W '0'
 
-  # '4':
-  #   name: toBridge
-  #   visited: 0
-  #   can_enter: always
-  #   NARRATIVES:
-  #     long: You see a bridge to the east, and the sound of the rushing river below increases.
-  #     short: You're near the bridge to the east.
-  #   OBJECTS:
-  #   MOVES:
-  #     N: &N '3'
-  #     E: &E 4a
-  #     S: &S 10c
-  #     W: &W '5'
+  '4':
+    name: toBridge
+    visited: 0
+    can_enter: always
+    NARRATIVES:
+      long: You see a bridge to the east, and the sound of the rushing river below increases.
+      short: You're near the bridge to the east.
+    OBJECTS:
+    MOVES:
+      N: &N '3'
+      E: &E 4a
+      S: &S 10c
+      W: &W '5'
 
   4a:
     name: bridge
@@ -178,12 +178,15 @@ LOCATIONS:
         general: You get to the other side. Yay. To be continued.
         exceptions:
           4b: [[if: [4b, visited, 0],
-            narrative: Walking steadily across the wooden planks, you notice a figure at the other
-              side -- a classically bearded, tall man, robed in silver-grey folds standing
-              proud, watching you cross; almost like he is guarding the other side of the
-              bridge, as if in consortium with the troll. Reaching the other side, the man
-              brings his large hands together, and you hear a large rumble beneath the ground.
-              All goes dark.]]
+                narrative: Walking steadily across the wooden planks, you notice a figure at the other
+                  side -- a classically bearded, tall man, robed in silver-grey folds standing
+                  proud, watching you cross; almost like he is guarding the other side of the
+                  bridge, as if in consortium with the troll. Reaching the other side, the man
+                  brings his large hands together, and you hear a large rumble beneath the ground.
+                  All goes dark.,
+                actions: [[goto, '0']]
+              ]]
+              
     OBJECTS:
     MOVES:
       N: &N boundary
