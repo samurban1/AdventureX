@@ -5,32 +5,27 @@ PLAYER:
   health: 100
 
   states:
-    legs_work: False
+    can_walk: False
 
   OBJECTS:
     hand:
       type: SIMPLE
       references: [arms, hands, arm, hand, fist, fists]
       damage: 3
-    reactions:
-      commands:
-        hit: You hit.
 
     leg:
       references: [leg, legs, foot, feet]
       damage: 5
   reactions:
     state_changes:
+      can_walk:
+        True: You have just received an ability that every single human being is born with. Congratulations -- 
+          You can walk now!!! Your feet can now take you places, places that you before would not have been able to
+          reach.
+
+    numerical_state_changes:
       health:
-        # This is different than most state_change dictionaries, since health is not a boolean, but rather
-        # a mutable number. There is a general reaction in case the exceptions don't pass, and I use the 
-        # general/exceptions system in a backwards way -- I use it on itself, in the sense that inside the
-        # health state_changes dictionary I check if the health is in a certain range, and if so, play the 
-        # provided reaction.
-        general: Your health has decreased, be warned.
-        exceptions:
-        - [if: [[player, health, 'range(85,93)']],
-          reaction: 'Careful, you want to save your health for when you really need it.']
-        - [if: [[player, health, 'range(75,85']],
-          reaction: "Damn, you really don't care about losing life. It's your life, dude!"]
-    
+      - {if: [[player, health, 'range(85,93)']],
+        reaction: 'Careful, you want to save your health for when you really need it.'}
+      - {if: [[player, health, 'range(75,85']],
+        reaction: "Damn, you really don't care about losing life. It's your life, dude!"}

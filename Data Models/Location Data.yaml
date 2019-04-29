@@ -34,13 +34,13 @@ intro: You open your eyes and are blinded by the ray of light coming from above.
       Crawling out of the trunk, you hear rushing water, and see that to your right,
       or east, is the edge of a cliff.
 
-warnings:
-  boundaries:
-    - Out of bounds, this location takes you nowhere.
-    - You sure you want to fall off the game? Well, you can't. Going this direction takes you nowhere;
-      you have hit a game boundary.
-    - One step further and you fall off the face of the flat earth; going this direction 
-      takes you nowhere. You have hit a game boundary.
+
+boundaries:
+  - Out of bounds, this location takes you nowhere.
+  - You sure you want to fall off the game? Well, you can't. Going this direction takes you nowhere;
+    you have hit a game boundary.
+  - One step further and you fall off the face of the flat earth; going this direction 
+    takes you nowhere. You have hit a game boundary.
 
 
 LOCATIONS:
@@ -56,6 +56,7 @@ LOCATIONS:
       long: You are inside the trunk that you first woke up in -- a tree trunk with a wide entrance that allows 
         you to fit inside. Nearby is the sound of rushing water, to your right, or east, is the edge of a cliff.
       short: You are back in the tree trunk.
+      actions: 
     MOVES:
       N: &N '1'
       E: &E '3'
@@ -90,10 +91,15 @@ LOCATIONS:
     visited: 0
     can_enter: always
     NARRATIVES:
-      long: You are at the edge of a cliff. Looking down, you see craggy rocks clinging
-        to the sides of the mountain wall, which leads down to a frothy white river.
-        Looking behind you, you see that a bridge is nearby, and it looks like it spans
-        the gap between your side of the cliff and the other.
+      long: 
+        general:
+          narrative: You are at another edge of the cliff, where you see a thrashing river far below. 
+        exceptions:
+        - {if: [['3', visited, 0]],
+          narrative: 'You are at the edge of a cliff. Looking down, you see craggy rocks clinging
+            to the sides of the mountain wall, which leads down to a frothy white river.
+            Looking behind you, you see that a bridge is nearby, and it looks like it spans
+            the gap between your side of the cliff and the other.'}
       short: You're at the edge of the cliff. A bridge is nearby.
     OBJECTS:
     MOVES:
@@ -107,12 +113,17 @@ LOCATIONS:
     visited: 0
     can_enter: always
     NARRATIVES:
-      long: You are at the edge of a cliff. Looking down, you see craggy rocks clinging
-        to the sides of the mountain wall, which leads down to a frothy white river.
-        Looking behind you, you see that a bridge is nearby, and it looks like it spans
-        the gap between your side of the cliff and the other.
-      short: You are at the edge of the cliff, which leads down to a dangerous-looking
+      long:
+        general: You are at another edge of the cliff, where you see a thrashing river far below. 
+        exceptions: 
+        - {if: [['2', visited, 0]],
+          narrative: 'You are at the edge of a cliff. Looking down, you see craggy rocks clinging
+            to the sides of the mountain wall, which leads down to a frothy white river.
+            Looking behind you, you see that a bridge is nearby, and it looks like it spans
+            the gap between your side of the cliff and the other.'}
+      short: You are at the edge of the cliff, which leads down to the dangerous-looking
         whitewater river. A bridge is nearby.
+
     OBJECTS:
     MOVES:
       N: &N '2'
@@ -137,7 +148,7 @@ LOCATIONS:
   4a:
     name: bridge
     references: [bridge, overpass, walkway]
-    can_enter:
+    can_enter: always
     visited: 0
     NARRATIVES:
       long:
@@ -145,54 +156,51 @@ LOCATIONS:
           the chasm. One problem, though - Yes, a troll — a short ginger-haired and brown-skinned
           creature — stands guard in front, holding a rusty metal staff.
         exceptions:
-          - [if: [[troll, guarding, False]],
-            narrative: A wooden plank-bridge stretches out before you, providing a pathway across 
-                the chasm. It is unguarded, just waiting for a passerby to cross it.]
-                
-          
+        - {if: [[troll, guarding, False]],
+          narrative: A wooden plank-bridge stretches out before you, providing a pathway across 
+              the chasm. It is unguarded, just waiting for a passerby to cross it.}
       short:
         general: The bridge is in front of you, guarded by an ugly troll in front holding
           a metal staff.
         exceptions:
-          troll: [[if: [guarding, False],
-                narrative: The bridge stretches out in front of you, unguarded.]]
+        - {if: [[troll, guarding, False]],
+          narrative: The bridge stretches out in front of you, unguarded.}
+
     MOVES:
       N: &N '9'
       E: &E 4b
       S: &S {warning: "You sure you want to jump over the bridge? You will most definitely crack your head on a rock below.",
-            yes: 10d, no: null}
+            yes: 10d, no: Good choice. Suicide = bad. }
       W: &W '4'
     OBJECTS: [troll]
     COMMANDS: [
-        {verbs: [jump, suicide], action: [goto, *S]}
+        {verbs: [jump, suicide], action: [goto, S]}
       ]
 
   4b:
     name: acrossBridge
     visited: 0
     can_enter: 
-    state_changes:
-      player: [can_walk]
     NARRATIVES:
       long:
-        general: You get to the other side. Yay. To be continued.
+        general: You are on the other side of the bridge, yay. To be continued.
         exceptions:
-          4b: [[if: [4b, visited, 0],
-                narrative: Walking steadily across the wooden planks, you notice a figure at the other
-                  side -- a classically bearded, tall man, robed in silver-grey folds standing
-                  proud, watching you cross; almost like he is guarding the other side of the
-                  bridge, as if in consortium with the troll. Reaching the other side, the man
-                  brings his large hands together, and you hear a large rumble beneath the ground.
-                  All goes dark.,
-                actions: [[goto, '0']]
-              ]]
-              
+          - {if: [[4b, visited, 0]],
+            narrative: Walking steadily across the wooden planks, you notice a figure at the other
+              side -- a classically bearded, tall man, robed in silver-grey folds standing
+              proud, watching you cross; almost like he is guarding the other side of the
+              bridge, as if in consortium with the troll. Reaching the other side, the man
+              brings his large hands together, and you hear a large rumble beneath the ground.
+              All goes dark.,
+            actions: [[goto, '0'], [player, change_state, can_walk, True]]}
+
     OBJECTS:
     MOVES:
       N: &N boundary
       E: &E boundary
       S: &S boundary
       W: &W 4a
+
   '5':
     name: behindHome
     visited: 0
@@ -206,13 +214,13 @@ LOCATIONS:
       E: &E '4'
       S: &S 10b
       W: &W '6'
+
   '6':
     name: leftBehindHome
     references: [forest, trees, woods]
     visited: 0
     NARRATIVES:
       long: Just more trees. You are surrounded.
-      short:
     OBJECTS:
     MOVES:
       N: &N '7'
@@ -231,6 +239,7 @@ LOCATIONS:
       E: &E 10a
       S: &S boundary
       W: &W boundary
+
   10a:
     name: moreTrees1
     references: [forest, trees, woods]
@@ -268,46 +277,57 @@ LOCATIONS:
       S: &S boundary
       W: &W 10b
 
-  10d:
-    name: deathFall2
-    visited: 0
-    state_changes:
-      player:
-        health: 0
-    NARRATIVES:
-      long: You fall of the bridge and die.
-    MOVES:
-      N: &N null
-      E: &E null
-      S: &S null
-      W: &W null
+# FIX THIS, MAKE IT UPON ARRIVAL THE PLAYER DIES
+  # 10d:
+  #   name: deathFall2
+  #   visited: 0
+  #   state_changes:
+  #     player:
+  #       health: 0
+  #   NARRATIVES:
+  #     long: You fall of the bridge and die.
+
+  #   MOVES:
+  #     N: &N null
+  #     E: &E null
+  #     S: &S null
+  #     W: &W null
 
   6a:
     name: staircase
     references: [staircase, stairs, stair]
     visited: 0
-    conditions:
-      player: [can_walk]
-      object: [lantern, lantern_on]
     NARRATIVES:
       long:
-        - All is dark. The ground feels marshy and wet, and squishes beneath
+        general: All is dark. The ground feels marshy and wet, and squishes beneath
           your hands and knees. The air is cold here. Stretching out your hands,
           you feel cold stone.
-        - lantern_on: The ground feels marshy and wet, and squishes beneath your hands
+        exceptions:
+        - {if: [[lantern, lit, True]],
+          narrative: The ground feels marshy and wet, and squishes beneath your hands
             and knees. By the light of your lantern, you see a stone staircase in front
-            of you.
+            of you.}
       short:
-        - You are back in the dark, squishy, wet area.
-        - lantern_on: You are back by the staircase with the squishy wet ground.
-    RESPONSES:
-      - {verbs: [climb, up, stairs, upwards], conditions: [can_walk],
-        responses: ["You can't climb the stairs; hell, you can't even walk! Try to do
-          that first and then come back.",
-          "Walking up the stairs, you slip a little, and you see that the steps
-          are wet with what seems to be some kind of slime. Reaching the top of the
-          staircase, you see a note."]
-            }
+        general: You are back in the dark, squishy, wet area.
+        exceptions:
+        - {if: [[lantern, lit, True]],
+          narrative: You are back by the staircase with the squishy wet ground.}
+
+    COMMANDS:
+      - [climb, up, stairs, upwards]
+
+    REACTIONS:
+      climb:
+        general:
+          reaction: "Walking up the stairs, you slip a little, and you see that the steps
+            are wet with what seems to be some kind of slime. Reaching the top of the
+            staircase, you see a note."
+          actions: [[goto, '@6b']]
+        exceptions:
+        - {if: [[player, can_walk, False]],
+          reaction: "You can't climb the stairs; hell, you can't even walk! Try to do
+                  that first and then come back."}
+
     MOVES:
       N: &N 7a
       E: &E '6'
@@ -389,6 +409,7 @@ LOCATIONS:
       E: &E 8a
       S: &S null
       W: &W null
+
   '9':
     name: deathFall
     visited: 0
@@ -420,5 +441,5 @@ LOCATIONS:
       N: &N '9'
       E: &E 4b
       S: &S {warning: "You sure you want to jump over the bridge? You will most definitely crack your head on a rock below.",
-            yes: 10d, no: null}
+            yes: 10d, no: Smart.}
       W: &W '4'
