@@ -10,14 +10,14 @@ import random
 # Make sure for go_to, that its not 'boundary', in that case, randomly choose a boundary response
 
 
-def exceptions_handler(dictionary, typ):
+def exceptions_handler(exceptions, typ):
 	"""Handles things in which general/exception sets are declared."""
 	# print('dictionary given in exceptions handler:', dictionary)
-	exceptions = dictionary['exceptions']
+	# exceptions = dictionary['exceptions']
 	# break out of the loop below if a condition passes
 	for exception in exceptions:  # item is either name of object/actor/location, or 'player'
 		conditions_passed = False
-		for condition_set in exception[0]['if']:  # for every exception list in the 'if' key
+		for condition_set in exception['if']:  # for every exception list in the 'if' key
 			item = condition_set[0]  # e.g. player, lantern, troll, or 6a
 			state = condition_set[1]  # e.g. 'lit' or 'guarding'
 			condition = condition_set[2]  # e.g. True/False, 6a (location)
@@ -42,16 +42,57 @@ def exceptions_handler(dictionary, typ):
 
 		if conditions_passed:
 			actions = None
-			if exception[0].get('actions'):
-				actions = exception[0]['actions']
+			if exception.get('actions'):
+				actions = exception['actions']
 
-			if typ in 'state change | command | receipt':
-				reaction = [exception[1]['reaction']]  # put it in a list for proper random.choice() functionality
+			if typ in 'numeric state change | command | receipt':
+				reaction = [exception['reaction']]  # put it in a list for proper random.choice() functionality
 														# (to not pick a letter out of a string)
 				return random.choice(reaction), actions  # if there is only one given option (as in most cases),
 				# it will only choose the one, and if there are more, it will choose it randomly.
 			elif typ == 'narrative':
-				return exception[1]['narrative'], actions
+				return exception['narrative'], actions
+
+
+def exec_action_from_file(action_set):
+	"""Executes an action specified in a yaml file, ALWAYS under the key 'actions'.
+	These actions will only refer to functions that have one parameter -- the functions that
+	have multiple parameters are ones that the player can call.
+	"""
+	if len(action_set) == 2:
+		function = action_set[0]
+		argument = action_set[1]
+		globals()[function](argument)
+	else:
+		reference = action_set[0]
+		function = action_set[1]
+		argument = action_set[2]
+		if 'range' in argument:  # troll, attack, range(4,16)
+			argument = list(eval(argument))
+
+		if reference == 'player':
+			function = getattr(player, function)
+
+		else:
+			if reference in LOCATIONS:
+				dictionary = LOCATIONS
+			elif reference in OBJECTS:
+				dictionary = OBJECTS
+			elif reference in ACTORS:
+				dictionary = ACTORS
+			function = getattr(dictionary[reference], function)  # get the method of the (python) object
+
+		if len(action_set) == 4:
+			function(argument, action_set[3])
+		else:
+			function(argument)
+
+
+def exec_actions_if_any(actions):
+	"""Executes all the actions provided, if there are any. Hence the function name."""
+	if actions:
+		for action_set in actions:
+			exec_action_from_file(action_set)
 
 
 def natural_random(msg, used_msgs, msg_list):
@@ -207,34 +248,6 @@ def dir_to_loc(direction):
 		return new_loc
 
 
-def exec_action_from_file(action_set):
-	"""Executes an action specified in a yaml file, ALWAYS under the key 'actions'.
-	These actions will only refer to functions that have one parameter -- the functions that
-	have multiple parameters are ones that the player can call.
-	"""
-	if len(action_set) is 2:
-		function = action_set[0]
-		argument = action_set[1]
-		globals()[function](argument)
-	else:
-		reference = action_set[0]
-		function = action_set[1]
-		argument = action_set[2]
-		if 'range' in argument:
-			argument = list(eval(argument))
-		if reference == 'player':
-			function = getattr(player, function)
-		else:
-			if reference in LOCATIONS:
-				dictionary = LOCATIONS
-			elif reference in OBJECTS:
-				dictionary = OBJECTS
-			elif reference in ACTORS:
-				dictionary = ACTORS
-			function = getattr(dictionary[reference], function)  # get the method of the (python) object
-
-		function(argument)  # execute the function with given argument
-
 
 all_commands = []
 
@@ -336,7 +349,7 @@ class Object:
 		except KeyError:
 			pass
 
-	def react(self, typ, command):
+	def react_to_command(self, command):
 		"""React to a state change or command
 		:param command: a command.
 		:param typ: just there for no reason
@@ -347,12 +360,11 @@ class Object:
 		# print('has exceptions:', has_exceptions)
 
 		if has_exceptions:
-			reaction = exceptions_handler(dictionary, 'command')
+			reaction, actions = exceptions_handler(dictionary['exceptions'], 'command')
 			general = dictionary['general']
-			if not reaction:
-				print(general)
-			else:
-				print(reaction)
+			print(reaction) if reaction else print(general)
+			exec_actions_if_any(actions)
+
 		else:
 			print(dictionary)
 
@@ -377,12 +389,12 @@ class ComplexObject(Object):
 		self.reactions = obj_dict['reactions']
 		self.sc_reactions = self.reactions['state_changes']
 
-	def change_state(self, state):
+	def change_state(self, state, value):
 		"""Changes active state of object based on user's command or other circumstance."""
 		format = (self.name, state, self.states[state], not self.states[state])
 		print("Changing {}'s state of {} from {} to {}".format(*format))  # unpack format
-		self.states[state] = not self.states[state]  # if state is True, then change it to False, and vice versa.
-		self.react('state change', state, boolean=self.states[state])
+		self.states[state] = value
+		self.react('state change', state, value)
 		# if player.active_location not in self.info.get('exceptions'):
 		#     print(self.sc_reactions[new_state])
 		# else:
@@ -401,8 +413,8 @@ class ComplexObject(Object):
 		"""
 		# print('typ inside react is:', typ)
 		if typ == 'command':
-			Object.react(self, 'command', state_or_cmd)
-		else:
+			Object.react_to_command(self, state_or_cmd)
+		else:  # if typ == state change
 			dictionary = self.sc_reactions[state_or_cmd]
 			has_exceptions = True if dictionary.get('exceptions') else False
 
@@ -410,9 +422,8 @@ class ComplexObject(Object):
 			# print('has exceptions:', has_exceptions)
 
 			if has_exceptions:
-				reaction = exceptions_handler(dictionary, typ)
-				general = dictionary['general']
-				general = general[boolean]
+				reaction, actions = exceptions_handler(dictionary['exceptions'], typ)
+				general = dictionary['general'][boolean]
 				if not reaction:
 					print(general)
 				else:
@@ -421,8 +432,10 @@ class ComplexObject(Object):
 					else:
 						print(reaction[boolean])
 			else:
-				print(dictionary[boolean])  # there will always be both a True and False reaction, so
-				# [boolean] won't fail / raise an exception
+				try:
+					print(dictionary[boolean])
+				except KeyError:
+					print('dictionary:', dictionary, 'has no reaction at boolean:', boolean)
 
 
 class Actor(ComplexObject):
@@ -432,6 +445,7 @@ class Actor(ComplexObject):
 		ComplexObject.__init__(self, actor_dict, name)
 		self.health = actor_dict['health']
 		self.receive_reactions = self.reactions['receive']
+		self.num_sc_reactions = self.reactions['numerical_state_changes']
 
 	def react(self, typ, state_or_obj, boolean=None):
 		"""React to a state change or command
@@ -448,17 +462,23 @@ class Actor(ComplexObject):
 			# print('dictionary for typ: {}: {}'.format(typ, dictionary))
 
 			if has_exceptions:
-				reaction = exceptions_handler(dictionary, typ=typ)
+				reaction, actions = exceptions_handler(dictionary['exceptions'], typ)
 				general = dictionary['general']
-				if not reaction:
-					print(general)
-				else:
-					print(reaction)
+				print(reaction) if reaction else print(general)
+				exec_actions_if_any(actions)
+
 			else:
 				print(dictionary)
+				actions = self.receive_reactions[state_or_obj].get('actions')
+				exec_actions_if_any(actions)
 
-			for action_set in self.receive_reactions[state_or_obj]['actions']:
-				exec_action_from_file(action_set)
+		elif typ == 'numeric state change':
+			conditions_list = self.num_sc_reactions[state_or_obj]
+			reaction, actions = exceptions_handler(conditions_list, typ=typ)
+			if reaction:
+				print(reaction)
+				exec_actions_if_any(actions)
+
 		else:
 			print('TypError: we don\'t support a reaction of type:', typ)
 
@@ -475,12 +495,17 @@ class Actor(ComplexObject):
 		if not foundObj:
 			print(self.name, 'has no use for a', object)
 
+	def react_to_num_change(self, attribute, value):
+		"""Reacts to a change in a state that does not have a boolean value, but rather a
+		numerical one."""
+		attribute = getattr(self, attribute)
+
 
 class ViolentActor(Actor):
 	"""This is a violent actor that can attack."""
 	def __init__(self, actor_dict, name):
 		Actor.__init__(self, actor_dict, name)
-		self.attack_reactions = actor_dict['reactions']['attack']
+		self.attack_reactions = self.reactions['attack']
 
 	def attack(self, damage_range):
 		"""
@@ -529,8 +554,8 @@ class Location:
 		self.conditions = loc_info.get('conditions', None)
 		self.objects = loc_info.get('OBJECTS', [])
 		self.references = loc_info.get('references', [])
-
-		self.attributes = []
+		self.commands = loc_info.get('COMMANDS', [])
+		self.reactions = loc_info.get('reactions')
 
 	def narrate(self, typ=None):
 		"""Does a few checks and then prints the appropriate narrative."""
@@ -543,8 +568,9 @@ class Location:
 
 		if self.visited == 0 or typ == 'long':
 			print('\nprinting long in location', self.num)
-			printable = check_narrative(self.narratives['long'])
-			print(printable)
+			narration, actions = check_narrative(self.narratives['long'])
+			print(narration)
+			exec_actions_if_any(actions)
 
 		else:
 			print('\nprinting short in location', self.num)
@@ -562,8 +588,21 @@ class Location:
 			print('objects after:', self.objects)
 		except ValueError:
 			print("Location doesn't contain a {} to remove.".format(object))
-# subclasses dif behaviors for dif locations
-# subclasses for objects fixed or not
+
+	def react(self, command):
+		dictionary = self.reactions[command]
+		has_exceptions = True if type(dictionary) is dict else False
+		# print('dictionary[state_or_cmd] inside react:', dictionary, type(dictionary))
+		# print('has exceptions:', has_exceptions)
+
+		if has_exceptions:
+			reaction, actions = exceptions_handler(dictionary['exceptions'], 'command')
+			general = dictionary['general']
+			print(reaction) if reaction else print(general)
+			exec_actions_if_any(actions)
+		else:
+			print(dictionary)
+
 # forward back left right for user's orientation, and n s e w fixed
 
 
@@ -582,11 +621,25 @@ class Player:
 		for state in self.states:
 			value = self.states[state]
 			setattr(self, state, value)  # set custom object attributes based on the given states
+		self.reactions = player_info['reactions']
+		self.sc_reactions = self.reactions['state_changes']
+		self.num_sc_reactions = self.reactions['numerical_state_changes']
 
-		# for thing in self.attributes:
-		#     print(1)
-		#     # pass in players location, get the narrative dict for location, search in the narrative dict for thing, and if found,
-		#     # print narratives[thing]
+	def react_to_sc(self, state_change, boolean):
+		"""Reacts to changes to any of the player's states."""
+		pass
+
+	def change_state(self, state, value):
+		"""Changes active state of object based on user's command or other circumstance."""
+		format = (state, self.states[state], value)
+		print("Changing player's state of {} from {} to {}".format(*format))  # unpack format
+		self.states[state] = value  # if state is True, then change it to False, and vice versa.
+		self.react('state change', state, value)
+		# if player.active_location not in self.info.get('exceptions'):
+		#     print(self.sc_reactions[new_state])
+		# else:
+		#     print(self.sc_reactions['exceptions']
+		#           [player.active_location][new_state])
 
 	def take(self, reference):
 		"""To be called when user says to take an object."""
@@ -609,7 +662,7 @@ class Player:
 	#     self.inventory.append(item)
 	#     item.owner = self
 
-	def drop(self, reference, loud):
+	def drop(self, reference, coming_from='drop'):
 		"""To be called when user says to drop an object."""
 		reference = check_for_item(reference, typ='OBJ')  # Get official name of object
 		if not reference:
@@ -620,13 +673,14 @@ class Player:
 			self.inventory.remove(reference)
 			location = LOCATIONS[self.active_location]
 			location.objects.append(reference)
-			OBJECTS[reference].react('command', 'drop')
+			if coming_from == 'drop':
+				OBJECTS[reference].react('command', 'drop')
 
-	def drop_silently:
-
+	def drop_silently(self):
+		pass
 
 	def throw(self, reference, actor=None):
-		self.drop(reference)
+		self.drop(reference, coming_from='throw')
 		OBJECTS[reference].react('command', 'throw')
 
 	def give(self, actor, reference):
@@ -665,13 +719,6 @@ class Player:
 		"""Turn in a given direction"""
 		self.orientation = direction
 
-	def activate_func(self, func, *args):
-		"""
-
-		:param func:
-		:param args:
-		"""
-		getattr(self, func)(args)
 
 	def __str__(self):
 		return ('I am a player in this game. I am currently in location ' + self.active_location[-1]
@@ -768,21 +815,21 @@ def test_state_changes():
 
 	print('---NEW---')
 	print('changing lantern lit to True')
-	OBJECTS['lantern'].change_state('lit')
+	OBJECTS['lantern'].change_state('lit', True)
 
 	print('\n---NEW---')
 	print('changing lantern lit to False')
-	OBJECTS['lantern'].change_state('lit')
+	OBJECTS['lantern'].change_state('lit', False)
 
 	player.active_location = '6a'
 	print('changed player location to 6a')
 
 	print('\n---NEW---')
 	print('changing lantern lit to False')
-	OBJECTS['lantern'].change_state('lit')
+	OBJECTS['lantern'].change_state('lit', False)
 	print('\n---NEW---')
 	print('changing lantern lit to True')
-	OBJECTS['lantern'].change_state('lit')
+	OBJECTS['lantern'].change_state('lit', True)
 	print('\n---NEW---')
 	player.active_location = '4a'
 	exceptions_handler(LOCATIONS['4a'].narratives['long'], 'narrative')
