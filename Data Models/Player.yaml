@@ -16,6 +16,7 @@ PLAYER:
     leg:
       references: [leg, legs, foot, feet]
       damage: 5
+
   reactions:
     state_changes:
       can_walk:
@@ -23,9 +24,10 @@ PLAYER:
           You can walk now!!! Your feet can now take you places, places that you before would not have been able to
           reach.
 
-    numerical_state_changes:
       health:
-      - {if: [[player, health, 'range(85,93)']],
-        reaction: 'Careful, you want to save your health for when you really need it.'}
-      - {if: [[player, health, 'range(75,85']],
-        reaction: "Damn, you really don't care about losing life. It's your life, dude!"}
+        general: Player's health has decreased.
+        exceptions:
+        - {if: [[player, health, 'range(85,93)']],
+          reaction: 'Careful, you want to save your health for when you really need it.'}
+        - {if: [[player, health, 'range(75,85']],
+          reaction: "Damn, you really don't care about losing life. It's your life, dude!"}

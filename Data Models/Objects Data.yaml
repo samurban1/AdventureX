@@ -18,6 +18,8 @@ OBJECTS:
     weight: 3
     damage: 5
 
+    reactions: {}
+
   knife:
     type: SIMPLE
     references: [knife, blade, dagger]
@@ -27,6 +29,7 @@ OBJECTS:
     damage: 22
     weight: 
 
+    reactions: {}
 
   egg:
     type: SIMPLE
@@ -40,9 +43,8 @@ OBJECTS:
     reactions:
       commands:
         throw:
-          general:
-            reaction: You throw the egg yay. IT breaks.
-            actions: [[remove_from_game, egg]]
+          reaction: You throw the egg yay. IT breaks.
+          actions: [[remove_from_game, egg]]
 
   lantern:
     type: COMPLEX
@@ -63,9 +65,8 @@ OBJECTS:
       state_changes:
         lit:
           general:
-            reaction:
-              True: The light turns on, but it doesn't help - it's already light here.
-              False: The light turns off, but so what? It's already light here.
+            True: The light turns on, but it doesn't help - it's already light here.
+            False: The light turns off, but so what? It's already light here.
           exceptions: 
             - {if: [[player, active_location, 6a]],
               reaction: {True: 'The light turns on, and everything becomes more clear.
@@ -81,7 +82,9 @@ OBJECTS:
         throw:
           general: You throw the lantern and it falls with a clatter on the ground a few feet away.
           exceptions:
-            - {if: [[troll, guarding, True], [player, active_location, 4a]],
+            - {if: [[troll, guarding, True], [player, active_location, 4a]],  
+            # if throw at troll is not specifically called, and player just throws in in the vicinity of the troll.
+            # if throw at troll is called, then it won't map to the throw reaction, it will map to the attack reaction
               reaction: "You throw the lantern and the troll runs away, scared."}  
         #- attack: *unattackable
 
@@ -94,6 +97,7 @@ ACTORS:
     type: Violent
     references: [troll, ugly]
     description: a large ugly troll
+    short_desc: a large ugly troll
     active_location: 4a
     damage: 17
     health: 100
@@ -112,20 +116,20 @@ ACTORS:
             reaction:
               False: It ambles away, shoulders drooping.
             # action: 
-
-      numerical_state_changes:
         health:
-        - {if: [[troll, health, 'range(20,35)']],
-          reaction: The troll is too weak to guard the bridge.,
-          actions: [[troll, change_state, guarding, False]]}
+          general: The troll's health decreases.
+          exceptions:
+          - {if: [[troll, health, 'range(20,35)']],
+            reaction: The troll is too weak to guard the bridge.,
+            actions: [[troll, change_state, guarding, False]]}
 
       attack:
         damage_received:
           - {if: [0],
             messages: [That had absolutely zero effect on the troll. Try again.]}
-          - {if: ['range(1,7)'],
+          - {if: ['range(1,7)'],  # if player's attack damage is in range()
             messages: ["The troll staggers, seeming like he is about to lose his footing, but he
-                    grounds himself, ready to continue to take you on."]}
+                    grounds himself, ready to continue to take you on."]}  # troll gets attacked message
           - {if: ['range(7,15)'],
             messages: ['The troll is definitely not happy, he is not used to being challenged like this.']}
           - {if: ['range(15,25)'],
@@ -134,8 +138,8 @@ ACTORS:
         response:
           actions: [[troll, attack, 'range(1,25)']]
           message:
-            - {if: ['range(1,7)'],
-              messages: [The troll lunges at you and scratches your face, 
+            - {if: ['range(1,7)'],  # if troll's attack on player is in range()
+              messages: [The troll lunges at you and scratches your face,  # player gets attacked message
                       The troll swipes at you and you fall to the ground.]}
             - {if: ['range(7,15)'],
               messages: ["The troll takes his stick and rams it into your stomach. You fall over, gasping for breath.

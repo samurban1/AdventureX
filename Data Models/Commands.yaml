@@ -10,14 +10,15 @@ COMMANDS:
     {verbs: [attack, hit, strike], needs: [actor, object], action: [attack, actor, object]},
     {verbs: [go, travel, move], needs: [location/direction], action: [goto, location]},
   ]
+  
   custom_commands:
     forOBJECTS:
       lantern: [
-        {verbs: [on, turn on], action: [change_state, light_on]},
-        {verbs: [off, turn off], action: [change_state, light_off]},
+        {verbs: [on, turn on], actions: [lantern, change_state, lit, True]},
+        {verbs: [off, turn off], actions: [lantern, change_state, lit, False]},
       ]
-    forLOCATIONS: None
-    forACTORS: None
+    forLOCATIONS: null
+    forACTORS: null
   function_maps: [
     {verbs: [hit, strike, punch], map: [attack, <actor>, hand]}
   ]
@@ -29,3 +30,17 @@ COMMANDS:
     location: <verb> where?
     with: What do you want to <verb> the <object> with?
   invalid: You can't do that, sorry dude.
+
+  warnings:
+    yes: ["yes", "yea", "yeah", "OK", "okey dokey", "by all means", 
+      "affirmative", "aye aye", "roger", "10-4", "uh-huh", "righto", 
+      "very well", "yup", "yuppers", "right on", "ja", "surely", "amen", 
+      "fo shizzle", "totally", "sure", "yessir"]
+    no: ["no", "Nah", "Nope", "No way", "Sorry", "Not now", "Certainly not", 
+      "By no means", "I shall not", "Not likely", "No thanks!", 
+      "I think not.", "Unfortunately not", "I’m slammed", "Not possible", 
+      "Not this time", "Not for me, thanks", "It’s not my thing", 
+      "I think I’ll pass.", "Not today, thanks", "I wish I could but", 
+      "Maybe another time", "I’m not interested", "If only I could!", 
+      "If only it worked", "I’ll need to bow out", "I’m afraid I can’t", 
+      "I have something else", "I don’t think I want to", "Thanks, but no thanks"]

@@ -56,7 +56,6 @@ LOCATIONS:
       long: You are inside the trunk that you first woke up in -- a tree trunk with a wide entrance that allows 
         you to fit inside. Nearby is the sound of rushing water, to your right, or east, is the edge of a cliff.
       short: You are back in the tree trunk.
-      actions: 
     MOVES:
       N: &N '1'
       E: &E '3'
@@ -75,7 +74,7 @@ LOCATIONS:
       long: Your home trunk is now behind you. All around you are closely-knit clusters
         of trees, but to your west there seems to be a clearing of some sorts.
       short: You're in front (and outside) of your home trunk.
-    OBJECTS:
+
     MOVES:
       N: &N boundary
       E: &E '2'
@@ -100,8 +99,12 @@ LOCATIONS:
             to the sides of the mountain wall, which leads down to a frothy white river.
             Looking behind you, you see that a bridge is nearby, and it looks like it spans
             the gap between your side of the cliff and the other.'}
-      short: You're at the edge of the cliff. A bridge is nearby.
-    OBJECTS:
+      short:
+        general: You are at the edge of the cliff again.
+        exceptions:
+        - {if: [['2', visited, 0]],
+          narrative: You're at the edge of the cliff. A bridge is nearby.}
+
     MOVES:
       N: &N boundary
       E: &E '9'
@@ -124,7 +127,7 @@ LOCATIONS:
       short: You are at the edge of the cliff, which leads down to the dangerous-looking
         whitewater river. A bridge is nearby.
 
-    OBJECTS:
+
     MOVES:
       N: &N '2'
       E: &E '9'
@@ -138,7 +141,7 @@ LOCATIONS:
     NARRATIVES:
       long: You see a bridge to the east, and the sound of the rushing river below increases.
       short: You're near the bridge to the east.
-    OBJECTS:
+
     MOVES:
       N: &N '3'
       E: &E 4a
@@ -172,7 +175,8 @@ LOCATIONS:
       S: &S {warning: "You sure you want to jump over the bridge? You will most definitely crack your head on a rock below.",
             yes: 10d, no: Good choice. Suicide = bad. }
       W: &W '4'
-    OBJECTS: [troll]
+
+    ACTORS: [troll]
     COMMANDS: [
         {verbs: [jump, suicide], action: [goto, S]}
       ]
@@ -192,9 +196,9 @@ LOCATIONS:
               bridge, as if in consortium with the troll. Reaching the other side, the man
               brings his large hands together, and you hear a large rumble beneath the ground.
               All goes dark.,
-            actions: [[goto, '0'], [player, change_state, can_walk, True]]}
+            actions: [[player, goto, '0'], [player, change_state, can_walk, True]]}
 
-    OBJECTS:
+
     MOVES:
       N: &N boundary
       E: &E boundary
@@ -208,7 +212,7 @@ LOCATIONS:
       long: You are now behind your home trunk. To your east you see a bridge in the
         distance; a hopeful sign that you can maybe get across the accursed cliff.
       short: You are behind your home trunk, and to the east is the bridge.
-    OBJECTS:
+
     MOVES:
       N: &N '0'
       E: &E '4'
@@ -221,77 +225,12 @@ LOCATIONS:
     visited: 0
     NARRATIVES:
       long: Just more trees. You are surrounded.
-    OBJECTS:
+
     MOVES:
       N: &N '7'
       E: &E '5'
       S: &S 10a
       W: &W 6a
-  '10':
-    name: moreTrees0
-    references: [forest, trees, woods]
-    visited: 0
-    NARRATIVES:
-      long: Just more trees. You are surrounded.
-    OBJECTS:
-    MOVES:
-      N: &N 6a
-      E: &E 10a
-      S: &S boundary
-      W: &W boundary
-
-  10a:
-    name: moreTrees1
-    references: [forest, trees, woods]
-    visited: 0
-    NARRATIVES:
-      long: Just more trees. You are surrounded.
-    OBJECTS:
-    MOVES:
-      N: &N '6'
-      E: &E 10b
-      S: &S No go; this is the edge of the game.
-      W: &W '10'
-  10b:
-    name: moreTrees2
-    references: [forest, trees, woods]
-    visited: 0
-    NARRATIVES:
-      long: Just more trees. You are surrounded.
-    OBJECTS:
-    MOVES:
-      N: &N '5'
-      E: &E 10c
-      S: &S boundary
-      W: &W 10a
-  10c:
-    name: moreTrees3
-    references: [forest, trees, woods]
-    visited: 0
-    NARRATIVES:
-      long: Just more trees. You are surrounded.
-    OBJECTS:
-    MOVES:
-      N: &N '4'
-      E: &E 10d
-      S: &S boundary
-      W: &W 10b
-
-# FIX THIS, MAKE IT UPON ARRIVAL THE PLAYER DIES
-  # 10d:
-  #   name: deathFall2
-  #   visited: 0
-  #   state_changes:
-  #     player:
-  #       health: 0
-  #   NARRATIVES:
-  #     long: You fall of the bridge and die.
-
-  #   MOVES:
-  #     N: &N null
-  #     E: &E null
-  #     S: &S null
-  #     W: &W null
 
   6a:
     name: staircase
@@ -299,14 +238,14 @@ LOCATIONS:
     visited: 0
     NARRATIVES:
       long:
-        general: All is dark. The ground feels marshy and wet, and squishes beneath
+        general: 'All is dark. The ground feels marshy and wet, and squishes beneath
           your hands and knees. The air is cold here. Stretching out your hands,
-          you feel cold stone.
+          you feel cold stone.'
         exceptions:
         - {if: [[lantern, lit, True]],
-          narrative: The ground feels marshy and wet, and squishes beneath your hands
+          narrative: 'The ground feels marshy and wet, and squishes beneath your hands
             and knees. By the light of your lantern, you see a stone staircase in front
-            of you.}
+            of you.'}
       short:
         general: You are back in the dark, squishy, wet area.
         exceptions:
@@ -319,15 +258,15 @@ LOCATIONS:
     REACTIONS:
       climb:
         general:
+          reaction: "You can't climb the stairs; hell, you can't even walk! Try to do
+                  that first and then come back."
+        exceptions:
+        - {if: [[player, can_walk, True]],
           reaction: "Walking up the stairs, you slip a little, and you see that the steps
             are wet with what seems to be some kind of slime. Reaching the top of the
-            staircase, you see a note."
-          actions: [[goto, '@6b']]
-        exceptions:
-        - {if: [[player, can_walk, False]],
-          reaction: "You can't climb the stairs; hell, you can't even walk! Try to do
-                  that first and then come back."}
-
+            staircase, you see a note.",
+          actions: [[player, goto, '@6b']]}
+        
     MOVES:
       N: &N 7a
       E: &E '6'
@@ -389,7 +328,7 @@ LOCATIONS:
     visited: 0
     NARRATIVES:
       long: You arrive in the clearing. A mysterious-looking silver egg lays in a small
-        indentation in the ground in the middle of the clearing, and a metal lantern lies next to it.
+        indentation in the ground in the middle of the clearing, and a brass lantern lies next to it.
       short: You're back in the clearing.
     OBJECTS: [egg, lantern]
     MOVES:
@@ -419,7 +358,71 @@ LOCATIONS:
     NARRATIVES:
       long: You fall 2000 feet and hit your head on a boulder at the bottom. You die.
       short:
-    OBJECTS:
+
+    MOVES:
+      N: &N null
+      E: &E null
+      S: &S null
+      W: &W null
+  
+  '10':
+    name: moreTrees0
+    references: [forest, trees, woods]
+    visited: 0
+    NARRATIVES:
+      long: Just more trees. You are surrounded.
+
+    MOVES:
+      N: &N 6a
+      E: &E 10a
+      S: &S boundary
+      W: &W boundary
+
+  10a:
+    name: moreTrees1
+    references: [forest, trees, woods]
+    visited: 0
+    NARRATIVES:
+      long: Just more trees. You are surrounded.
+
+    MOVES:
+      N: &N '6'
+      E: &E 10b
+      S: &S No go; this is the edge of the game.
+      W: &W '10'
+  10b:
+    name: moreTrees2
+    references: [forest, trees, woods]
+    visited: 0
+    NARRATIVES:
+      long: Just more trees. You are surrounded.
+
+    MOVES:
+      N: &N '5'
+      E: &E 10c
+      S: &S boundary
+      W: &W 10a
+  10c:
+    name: moreTrees3
+    references: [forest, trees, woods]
+    visited: 0
+    NARRATIVES:
+      long: Just more trees. You are surrounded.
+
+    MOVES:
+      N: &N '4'
+      E: &E 10d
+      S: &S boundary
+      W: &W 10b
+
+  10d:
+    name: deathFall2
+    visited: 0
+    NARRATIVES:
+      long:
+        narrative: You fall of the bridge and die.
+        actions: [[GAME_OVER]]
+
     MOVES:
       N: &N null
       E: &E null
