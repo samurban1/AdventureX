@@ -20,6 +20,7 @@ loc_filename = main_filename + 'Location Data.yaml'
 obj_filename = main_filename + 'Objects Data.yaml'
 cmd_filename = main_filename + 'Commands.yaml'
 player_filename = main_filename + 'Player.yaml'
+randoms_filename = main_filename + 'Random Dicts.yaml'
 
 warnings.simplefilter("ignore", error.ReusedAnchorWarning)
 
