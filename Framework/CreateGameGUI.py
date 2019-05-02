@@ -7,14 +7,21 @@ from pyautogui import press, hotkey
 from ttkthemes import ThemedTk
 import yaml, random, yamlordereddictloader
 from collections import OrderedDict
+import subprocess
 
 
 class Display:
+	"""Creates the GUI"""
 
 	def __init__(self):
+
 		themes = ["arc", "blue", "elegance"]
 		self.root = ThemedTk(theme=random.choice(themes))
 		self.root.title('Create Adventure')
+		self.root.resizable(False, False)
+		subprocess.call(['/usr/bin/osascript', '-e', 'tell app "Finder" to set frontmost of process "Python" to true'])
+
+		# self.root.protocol('WM_DELETE_WINDOW', self.click_cancel)
 		# self.center(self.root)
 
 		times = Font(family="Helvetica", size=11)
@@ -92,6 +99,22 @@ class Display:
 			self.cur_itemID = getattr(self, 'ObjNameEntry').get()
 		self.print('current itemID:', self.cur_itemID)
 		self.tabControl.focus()
+
+	def exceptions_popup(self):
+		var_name, title = 'new_win', 'exceptions win'
+		setattr(self, var_name, Toplevel(self.tabControl))
+		getattr(self, var_name).wm_title(title)
+
+		a = Label(getattr(self, var_name), text='enter exceptions here')
+		a.grid()
+
+		self.add_label(getattr(self, var_name), var_name='narratives_label', text='NARRATIVES', column=0, header=(True, True), bg='#F9CE5F')
+
+		self.add_entry(getattr(self, var_name), var_name='long_nar', label_text='LONG:', column=0, header=True)
+		self.add_checkboxes(getattr(self, var_name), 'long_exception_chkBox', 'Long Exceptions', column=0)
+		self.add_entry(getattr(self, var_name), var_name='short_nar', label_text='SHORT:', column=0, header=True)
+		self.add_checkboxes(getattr(self, var_name), 'short_nar_exception_chkBox', 'Short Exceptions', column=0)
+
 
 	def add_entry(self, tab_obj, var_name, label_text, column, sticky=W+E+N+S, anchor='w', header=False):
 		"""Adds an entry box and a var_name for it."""
@@ -403,12 +426,14 @@ class Display:
 
 		ttk.Separator(self.locTab, orient=HORIZONTAL).grid(row=self.row_counter, sticky=NSEW, rowspan=1, columnspan=4)
 
-		self.add_label(self.locTab, var_name='narratives_label', text='NARRATIVES', column=0, header=(True, True), bg='#F9CE5F')
-
-		self.add_entry(self.locTab, var_name='long_nar', label_text='LONG:', column=0, header=True)
-		self.add_checkboxes(self.locTab, 'long_exception_chkBox', 'Long Exceptions', column=0)
-		self.add_entry(self.locTab, var_name='short_nar', label_text='SHORT:', column=0, header=True)
-		self.add_checkboxes(self.locTab, 'short_nar_exception_chkBox', 'Short Exceptions', column=0)
+		Button(self.locTab, text='create exceptions', padx=5, pady=5, command=self.exceptions_popup).grid(row=self.row_counter+1, column=0)
+		#
+		# self.add_label(self.locTab, var_name='narratives_label', text='NARRATIVES', column=0, header=(True, True), bg='#F9CE5F')
+		#
+		# self.add_entry(self.locTab, var_name='long_nar', label_text='LONG:', column=0, header=True)
+		# self.add_checkboxes(self.locTab, 'long_exception_chkBox', 'Long Exceptions', column=0)
+		# self.add_entry(self.locTab, var_name='short_nar', label_text='SHORT:', column=0, header=True)
+		# self.add_checkboxes(self.locTab, 'short_nar_exception_chkBox', 'Short Exceptions', column=0)
 
 		self.row_counter = 8
 
