@@ -10,7 +10,7 @@ messages:
 OBJECTS:
   backpack:
     type: CONTAINER
-    references: [backpack, bag, sack, pack, knapsack]
+    references: [backpack, haversack, sack, pack, back_pack, bag, packsack, knapsack, rucksack]
     description: A brown linen durable backpack capable of holding up to 55 lbs.
     short_desc: a brown linen backpack
     active_location: '10'
@@ -87,78 +87,3 @@ OBJECTS:
             # if throw at troll is called, then it won't map to the throw reaction, it will map to the attack reaction
               reaction: "You throw the lantern and the troll runs away, scared."}  
         #- attack: *unattackable
-
-ACTORS:
-  # actors don't have a weight, it doesn't really matter how heavy they are
-  # because you're not throwing them at something as you don't have control over them.
-  troll:
-
-    # attributes that all actors have
-    type: Violent
-    references: [troll, ugly]
-    description: a large ugly troll
-    short_desc: a large ugly troll
-    active_location: 4a
-    damage: 17
-    health: 100
-    attack: True
-    can_talk: False
-
-    # states are attributes specific to this actor
-    states:
-      guarding: True
-
-    # messages:
-    reactions:
-      state_changes:
-        guarding:
-          general:
-            reaction:
-              False: It ambles away, shoulders drooping.
-            # action: 
-        health:
-          general: The troll's health decreases.
-          exceptions:
-          - {if: [[troll, health, 'range(20,35)']],
-            reaction: The troll is too weak to guard the bridge.,
-            actions: [[troll, change_state, guarding, False]]}
-
-      attack:
-        damage_received:
-          - {if: [0],
-            messages: [That had absolutely zero effect on the troll. Try again.]}
-          - {if: ['range(1,7)'],  # if player's attack damage is in range()
-            messages: ["The troll staggers, seeming like he is about to lose his footing, but he
-                    grounds himself, ready to continue to take you on."]}  # troll gets attacked message
-          - {if: ['range(7,15)'],
-            messages: ['The troll is definitely not happy, he is not used to being challenged like this.']}
-          - {if: ['range(15,25)'],
-            messages: [The troll falls to the ground but gets back up again. He is not used to being challenged like this.]}
-
-        response:
-          actions: [[troll, attack, 'range(1,25)']]
-          message:
-            - {if: ['range(1,7)'],  # if troll's attack on player is in range()
-              messages: [The troll lunges at you and scratches your face,  # player gets attacked message
-                      The troll swipes at you and you fall to the ground.]}
-            - {if: ['range(7,15)'],
-              messages: ["The troll takes his stick and rams it into your stomach. You fall over, gasping for breath.
-                      You know, it's really not a good idea to fight this thing. Why fight when you can go another,
-                      more peaceful, route?"]}
-            - {if: ['range(15,25)'],
-              messages: [The troll pummels you to the ground and smacks your head in.,
-                      The troll grabs you like the bear did in the Revenant™ and throws you a few feet away.]}
-
-      receive:
-        egg:
-          general:
-            reaction: The troll gently reaches out and takes the egg from your hand. 
-              It examines the egg, turning it over in its large hands. Looking satisfied, the troll
-              steps aside, allowing you to cross.
-            actions: [[troll, change_state, guarding, False], [4a, remove_object, troll]]
-          exceptions:
-            - {if: [[troll, health, 'range(30,100)']],  # if it has lost any amount of health (range will go up to 99)
-              reaction: "The troll, breathing heavily from fighting, relaxes it's posture and slowly reaches out to take the egg.
-                  It examines the egg, turning it over in its large hands. Looking satisfied, the troll
-                  steps aside, allowing you to cross.",
-              actions: [[troll, change_state, guarding, False], [4a, remove_object, troll]]}
