@@ -90,7 +90,7 @@ LOCATIONS:
     visited: 0
     can_enter: always
     NARRATIVES:
-      long: 
+      long:
         general:
           narrative: You are at another edge of the cliff, where you see a thrashing river far below. 
         exceptions:
@@ -234,7 +234,7 @@ LOCATIONS:
 
   6a:
     name: staircase
-    references: [staircase, stairs, stair]
+    references: [staircase, stairs, steps, stairway]
     visited: 0
     NARRATIVES:
       long:
@@ -253,7 +253,7 @@ LOCATIONS:
           narrative: You are back by the staircase with the squishy wet ground.}
 
     COMMANDS:
-      - [climb, up, stairs, upwards]
+      - [climb, mount, go up, up, stairs, upwards]
 
     REACTIONS:
       climb:
@@ -421,7 +421,7 @@ LOCATIONS:
     NARRATIVES:
       long:
         narrative: You fall of the bridge and die.
-        actions: [[GAME_OVER]]
+        actions: [[die]]
 
     MOVES:
       N: &N null
