@@ -1,53 +1,115 @@
 from nltk import RegexpParser
-# dirCMD = RegexpParser(r"Chunk: {<VB><DIR>}")
-# simpleCMD = RegexpParser(r"Chunk: {<VB><OBJ>}")
+import nltk.tree
+import fuckit
+
+
+class Functions:
+    def go(*args):
+        for arg in args:
+            print('i am going', arg)
+
+    def take(*objs):
+        for obj in objs:
+            print('i am taking the', obj)
+
+    @staticmethod
+    def attack(actor, with_object):
+        print('attacking', actor, 'with', with_object)
+
+    @staticmethod
+    def open(obj, with_object):
+        print('opening', obj, 'with', with_object)
+
+
+def exec_func_from_cmd(label, tagged_cmd):
+    """Parses the command into its function and arguments"""
+    print('tagged:', tagged_cmd)
+    first_word = tagged_cmd[0][1]
+    index = 0 if first_word == 'VB' else 3  # the else is for a USE-0BJ-TO-VB-ACT command
+    method = tagged_cmd[index][0]  # get the [insert index here] element of the list of tuples, then get the first element of the tuple,
+                                # which is the verb, which is the function name
+    function = getattr(Functions, method)
+    print('method:', function)
+    tagged_cmd.pop(index)
+    args = [arg[0] for arg in tagged_cmd]  # get the 0th value, which is the item -- an obj, dir, act, etc...
+    print('args:', args)
+
+    if label == 'USE-OBJ-TO-VB-ACT/OBJ':
+        print('matched in:', label)
+        actor_or_obj, with_object = args[-1], args[1]
+        print(actor_or_obj, with_object)
+        function(actor_or_obj, with_object)
+
+    if label == 'VB-ACT/OBJ-PRP-OBJ':
+        print('matched in:', label)
+        actor, with_object = args[0], args[2]  # skip over the PRP which is at args[1]
+        print(actor, with_object)
+        function(actor, with_object)
+
+    elif label in 'VB-DIR or VB-OBJ':  # the 'or' is just for visual clarity
+        function(*args)  # unpack the list and send it as the arguments
+
+
+# Constants
 OBJ = 'OBJ'
 PRP = 'PRP'
 VB = 'VB'
-ACT= 'ACT'
+ACT = 'ACT'
 AND = 'AND'
+DIR = 'DIR'
+USE = 'USE'
+TO = 'TO'
+BUT = 'BUT'
+ALL = 'ALL'
 
 # tagged = [('take', VB), ('egg', OBJ), ('go', VB), ('north', 'DIR'), ('attack', VB), ('TROLL', 'ACT')]
-tagged = [('lantern', OBJ), ('to', PRP), ('attack', VB), ('troll', ACT)]
-tagged = [('take', VB), ('lantern', OBJ), ('and', AND), ('take', VB), ('egg', OBJ)]
+# tagged = [('lantern', OBJ), ('to', PRP), ('attack', VB), ('troll', ACT)]
+# tagged = [('attack', VB), ('troll', ACT), ('with', PRP), ('knife', OBJ)]
+# tagged = [('take', VB), ('lantern', OBJ), ('egg', OBJ), ('backpack', OBJ), ('knife', OBJ), ('go', VB), ('north', 'DIR'), ('south', 'DIR')]
+
+tagged1 = [('attack', VB), ('troll', ACT), ('with', PRP), ('lantern', OBJ)]
+tagged2 = [('open', VB), ('chest', OBJ), ('with', PRP), ('nut', OBJ)]
+tagged3 = [('use', USE), ('sword', OBJ), ('to', TO), ('attack', VB), ('troll', ACT)]
+tagged4 = [('use', USE), ('nut', OBJ), ('to', TO), ('open', VB), ('chest', OBJ)]
 
 short_phrases = r"""
-			VB-ACT-PRP-OBJ: {<VB><ACT><PRP><OBJ>}
-			OBJ-PRP-VB-ACT: {<OBJ><PRP><VB><ACT>}
-			VB-OBJ: {<VB><OBJ>}
-			VB-DIR: {<VB><DIR>}
-			VB-ACT: {<VB><ACT>}
-			"""
-# long_phrases = r"""
-# 			VB-ACT-PRP-OBJ: {<VB><ACT><PRP><OBJ>}
-# 			OBJ-PRP-VB-ACT: {<OBJ><PRP><VB><ACT>}
-# 			"""
+                USE-OBJ-TO-VB-ACT/OBJ: {<USE><OBJ><TO><VB><(ACT|OBJ)>}
+                VB-ACT/OBJ-PRP-OBJ: {<VB><(ACT|OBJ)><PRP><OBJ>}
+                VB-OBJ: {<VB><OBJ>+}
+                VB-DIR: {<VB><DIR>+}
+                VB-ACT: {<VB><ACT>}
+                """
+
 # make sure egg to take, make sure it fits with user allowed weight
 
-chunkParser = RegexpParser(short_phrases)
+chunkParser = RegexpParser(short_phrases)  # create the parser with the grammar defined above
 
-chunked = chunkParser.parse(tagged)
-# for subtree in chunked.subtrees():
-#     # print the noun phrase as a list of part-of-speech tagged words
-#     print(chunked.leaves())
-response = chunked
-print(response)
+for tagged in (tagged1, tagged2, tagged3, tagged4):
+    print('\n\nNEW TAGSET')
+    chunked = chunkParser.parse(tagged)  # get the chunks, the matches that fit with the grammar
+    responses = list(chunked.subtrees())[1:]  # turn the generator that is returned by chunked.subtrees() into a list and
+    # get all the matches but the 0th (which is a Tree that contains ALL the subtrees -- the other list elements are the subtrees themselves)
 
-print(chunked.draw())
+    labels = [response.label() for response in responses]  # for every chunk/response Tree in the responses list, get the label from that Tree
+    matches = [response.leaves() for response in responses]  # for every chunk/response Tree in the responses list, get the leaves (which are the commands themselves,) from that Tree
+    print('responses labels:', labels)
+    print('responses matches:', matches)
+    # print(response)
+
+
+    # zip returns an iterable of python tuples where each element of the tuple will be from the lists passed into zip().
+    # zip() is mainly used to combine data of two iterable elements together
+    for label, match in zip(labels, matches):
+        print(f"\nlabel: {label}")
+        print(f"match: {match}\n")
+        exec_func_from_cmd(label, match)
+
+# print(chunked.draw())
+
 
 structure = None
 
 
-def activate_func(self, func, *args):
-	getattr(self, func)(args)
-
-for command, structure in structures:
-	if structure is VB_OBJ:
-		activate_func(command[0], command[1])
-
-
-
-#
 # chunkParser = RegexpParser(long_phrases)
 #
 # chunked = chunkParser.parse(tagged)
