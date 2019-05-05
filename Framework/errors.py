@@ -14,6 +14,13 @@ class VerbError(Exception):
     pass
 
 
+class AttackError(Exception):
+    pass
+
+class GoToError(Exception):
+    pass
+
+
 
 if __name__ == '__main__':
     while True:
