@@ -2,20 +2,21 @@
 # if it is multiple items, it means that 
 COMMANDS:
   general_commands: [
-    {verbs: [examine, describe], needs: [object/location], action: [describe, object/location]},
-    {verbs: [take, get, pick up, pick, retrieve], needs: [object], action: [take, object]},
-    {verbs: [drop, remove, release, let go of, unhand], needs: [object], action: [drop, object]}, 
-    {verbs: [throw, hurl, toss], needs: [object] , action: [throw, object]},
+    {verbs: [describe, depict, analyze, canvass, analyse, look, see, canvas, examine, study, probe], function: describe},
+    {verbs: [take, get, pick up, retrieve], function: take},
+    {verbs: [drop, remove, throw away, throw off, shed, release, let go of, unhand, unload, put down, eject, lose, let go, relinquish], function: drop}, 
+    {verbs: [throw, hurl, toss, project, cast, pitch, chuck, ], function: throw},
     # use lantern
-    {verbs: [attack, hit, strike], needs: [actor, object], action: [attack, actor, object]},
-    {verbs: [go, travel, move], needs: [location/direction], action: [goto, location]},
+    {verbs: [attack, assail, assault, aggress, snipe strike], function: attack},
+    {verbs: [go, travel, move, locomote, journey], function: goto},
+    # {verbs: [utilize, employ, apply, use, utilise], function: use}
   ]
   
   custom_commands:
     forOBJECTS:
       lantern: [
-        {verbs: [on, turn on], actions: [lantern, change_state, lit, True]},
-        {verbs: [off, turn off], actions: [lantern, change_state, lit, False]},
+        {verbs: [on, turn on, switch on, rouse, ], actions: [lantern, change_state, lit, True]},
+        {verbs: [off, turn off, cut, switch off], actions: [lantern, change_state, lit, False]},
       ]
     forLOCATIONS: null
     forACTORS: null
@@ -23,7 +24,6 @@ COMMANDS:
     {verbs: [hit, strike, punch], map: [attack, <actor>, hand]}
   ]
 
-  stopwords: [use, utilize]
   unprovided:
     object: <verb> what?
     verb: What about the <object>?
