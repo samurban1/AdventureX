@@ -3,6 +3,7 @@ from errors import *
 from nltk import pos_tag
 import random
 from Colors import *
+from itertools import zip_longest
 import fuckit
 # Add in documentation, that if you want to have a randomly chosen response, define your responses at the top of the document
 # or maybe in another document, so for example create a dict with key 'boundary', and then u can just write 'boundary; wherever
@@ -24,6 +25,7 @@ def exceptions_handler(exceptions, typ):
     # print('dictionary given in exceptions handler:', dictionary)
     # exceptions = dictionary['exceptions']
     # break out of the loop below if a condition passes
+    exceptions = [{'if': [['egg', 'being_held', True]]}]
     for exception in exceptions:  # item is either name of object/actor/location, or 'player'
         print('\nNEW exception set')
         conditions_passed = False
@@ -33,6 +35,7 @@ def exceptions_handler(exceptions, typ):
             condition = condition_set[2]  # e.g. True/False, 6a (location)
             if 'range' in str(condition):
                 condition = list(eval(condition))
+
             print('{} state "{}" needs to be (in) {} in order for this exception to fire'.format(item, state, condition))
 
             if item == 'player':
@@ -40,11 +43,14 @@ def exceptions_handler(exceptions, typ):
             else:
                 for dictionary in [LOCATIONS, OBJECTS, ACTORS]:
                     if item in dictionary:
+                        print('item in dictinoary:', dictionary)
                         item_state = getattr(dictionary[item], state)
                         break
-
-            print('{} state -- {} = {}'.format(item, state, item_state))
-            if type(condition) is list:
+            try:
+                print('{} state -- {} = {}'.format(item, state, item_state))
+            except UnboundLocalError:
+                print('\n\n\n\n\nERRORRRRRR\n\n\n\n')
+            if type(condition) is list:  # this will work for inventory, too
                 conditions_passed = True if item_state in condition else False
             else:
                 conditions_passed = True if item_state == condition else False  # if for example the second time around
@@ -157,10 +163,6 @@ def describe(something):
         print("I can't describe something that doesn't exist.")
 
 
-def get_command(command):
-    """Checks the command for verbs, references to objects & locations."""
-
-
 def check_for_dir(word):
     """Checks if the word is a signifier for a direction."""
     directions = [
@@ -184,16 +186,62 @@ def check_for_dir(word):
     return False
 
 
-def check_for_verb(word):
+def check_for_verb(word, command, index):
     """Checks if the word is a verb."""
+
+    def check_for_partial(word):
+        """Checks if the word is a partial verb, that is, a part of a multi-word verb.
+        Have to do 2 things:
+        1. check if the word is inside a multi-word verb.
+        2. Ensure that it is not a one-word verb -- for example, if the word is 'throw', but the word after it is 'away',
+           it is not the one-word verb 'throw' that maps to the function throw() but it is rather the two-word verb 'throw away'
+           that maps to the function drop().
+        How do you ensure that it is not a one-word verb? By looking at the word after it. If the word after it is the next word
+        in the multi-word verb, then you know the word is officially part of a multi-word verb, so you can "go ahead"
+        and return the appropriate tag."""
+        word_index = command.index(word)
+        try:
+            next_word = command[word_index+1]
+        except IndexError:  # if there is an index error, which would be raised if the word_index was the last index of
+            # the command, and adding 1 to it would be trying to access an index that is 1 greater than the indexes in the command
+            pass
+
+    # Checking if the word is in all the general commands
     for dict in COMMANDS['general_commands']:  # looping over all the dicts of verbs + needs + action sets
         if word in dict['verbs']:  # if the word is in the verbs list of current loop dict, now you have your verb
             verb = dict['function']
-            return verb
+
+            return verb, 'FVB', None  # FVB = function verb, None is for below where I return used_indexes -- have to
+                                    # return the same amount of values every time
+        else:
+            for cmd in dict['verbs']:
+                if word in cmd and ' ' in cmd:  # if the word, e.g. 'pick', is in 'pick up', and if a space is in 'pick up'...
+                    cmd = cmd.split()[1:]
+                    passed_cmd = False
+                    used_indexes = []
+                    for rest, extra_word in zip(command[index:], cmd):  # for the rest of the words in the full command (passed in)
+                        used_indexes.append(index)
+                        index += 1
+                        if rest == extra_word:
+                            passed_cmd = True
+                        else:
+                            passed_cmd = False
+                            # ###put error messages here, u missed a word here, a word there, etc ####
+                            return False
+                        # if everything went well and the full multiple-word command is found (with the for extra_word in cmd loop)
+                    if passed_cmd:
+                        verb = dict['function']
+                        tagged = pos_tagger()
+                        return verb, 'FVB', used_indexes
+
+    # Checking if the word is a special command, like for an object, location, or actor
+    pass
+                    #return 'partial', cmd.split()[1:]
+                # return index + n
     return False
 
 
-def check_requirements(word, needs):
+def check_requirements(word, needs):  # OBSOLETE FUNCTION - REMOVE!!!!
     """Get the official action word (verb).
     Needs is a list with sublists of the needed things. Each of those sublists can contain
     a single need or more than one, which means that there is an option. So, loop over the sublists in
@@ -285,77 +333,27 @@ def dir_to_loc(direction):
         return new_loc
 
 
-
-all_commands = []
-
-# active_object = ''  # if they say take lantern and throw IT
-structure = ''
-word_structure = ''
-
-# BELOW (COLLAPSED): old for word in command, if dir, if verb_result, etc...
-# for word in command:
-
-#     # ADD THAT IF THEY SAY ATTACK KEY AND THERE IS NO KEY, SAY THERE IS NO KEY
-
-#     if direction:
-#         # DEAL WITH THE DIR_TO_LOC FUNCTION
-#         direction = dir_to_loc(direction)
-#         for dir in direction:
-#             all_commands.append(['goto', dir])
-#
-#     elif verb_result:
-#
-#         verb, needs = verb_result
-#         verb_command = [verb]
-#         command.remove(word)
-#
-#         for inner_word in command:
-#             print('\n\ninner_word:', inner_word)
-#             meets_requirement = check_requirements(inner_word, needs)
-#             if meets_requirement:
-#                 print('requirement:', meets_requirement)
-#                 verb_command.append(meets_requirement)
-#                 command.remove(inner_word)  # if it meets the requirement, we add it to the verb command,
-#                 # but we don't want to accidentally use it again so we remove it
-#
-#         all_commands.append(verb_command)
-#
-#     elif location:
-#         all_commands.append(['goto', location])
-#     #
-#     # elif object:
-#     #     command.remove(word)
-#     #     for inner_word in command:
-#     #         verb_result = check_for_verb(inner_word)
-#     #         if verb_result:
-#     #             verb, needs = verb_result
-#     #             meets_requirement = check_requirements(object, needs)
-#     #             break  # once you find a verb, even if the object
-#     #             # use lantern to attack troll
-#
-# return all_commands
-
-
-def pos_tagger(command):
+def pos_tagger(command, tagged=None, used_indexes=None):
     """Tags each of the words in the command and returns a list of tuples with appropriate tags."""
+
     def add(word, POS):
+        """Tag the word and add to the skeleton."""
         tagged.append((word, POS))
         i = skeleton.index(word)
         skeleton[i] = ' '
 
-    skeleton = command
-    tagged = []
-    for word in command:
-        word = word.lower()
+    def tag_word(index):
+        """Checks the word for its type and adds the appropriate tag."""
+        word = command[index].lower()
         direction = check_for_dir(word)
-        verb = check_for_verb(word)
+        verb, tag, used_indexes = check_for_verb(word, command, index+1)  # pass in word, the full command, and the current index + 1
         location = check_for_item(word, typ='LOC')
         object = check_for_item(word, typ='OBJ')
         actor = check_for_item(word, typ='ACT')
         if direction:
             add(word, 'DIR')
         elif verb:
-            add(word, 'VB')
+            add(word, tag)  # tag can be 'FVB' for function verb or just 'VB' for an object/location/actor verb
         elif location:
             add(word, 'LOC')
         elif object:
@@ -372,11 +370,24 @@ def pos_tagger(command):
             add(word, 'TO')
         elif pos_tag([word])[0][1] == 'IN':  # NLTK pos_tag, argument is list, index 0 is the
             # tuple inside the list, index 1 is second item of tuple, which is the part of speech.
-            # the word in the 'but' check above might also be a preposition if it was run through the pos_tag() function,
+            # the word in the 'but' check above might also be a preposition if it was run through the pos_add() function,
             # that's why it is above this elif statement
             add(word, 'PRP')
         elif word in ('and', 'then', ','):
             add(word, 'AND')
+
+    skeleton = command
+    tagged = [] if tagged is None else tagged
+    if used_indexes is None:
+        indexes = range(len(command))
+    else:
+        indexes = [index for index in range(len(command)) if index not in used_indexes]
+
+    # pass in the command.
+    #
+    for i in indexes:
+        tag_word(i)
+
     return tagged, skeleton
 # get_command(tagged)
 
@@ -456,6 +467,7 @@ class Object:
         self.damage = obj_dict['damage']
         self.location = obj_dict['active_location']
 
+        self.being_held = obj_dict.get('being_held')
         self.weight = obj_dict.get('weight')  # actors have no weight so exception may be raised
         # print('{} object reactions: {}'.format(self.name, obj_dict['reactions']))
         self.cmd_reactions = obj_dict['reactions'].get('commands')  # object might not have specific commands
@@ -682,12 +694,12 @@ class Location:
         self.moves = loc_info['MOVES']
 
         # Locations can have
-        self.conditions = loc_info.get('conditions', None)
+        self.children = loc_info.get('CHILDREN', None)
         self.objects = loc_info.get('OBJECTS', [])
         self.actors = loc_info.get('ACTORS', [])
         self.references = loc_info.get('references', [])
         self.commands = loc_info.get('COMMANDS', [])
-        self.cmd_reactions = loc_info.get('REACTIONS')
+        self.cmd_reactions = loc_info.get('REACTIONS', None)
         self.kwargs = {'narratives': self.narratives}  # set up the dictionary with the  narratives "reactions"
         if self.cmd_reactions is not None:
             self.kwargs['cmd_reactions'] = self.cmd_reactions
@@ -983,10 +995,10 @@ def test_state_changes():
     #
     # new('climbing in 6a')
     # LOCATIONS['6a'].react('climb')
-    loc = LOCATIONS['4a'].moves['S']
-    new('going to loc 4a')
-    player.goto(loc)
-    raise SystemExit
+    # loc = LOCATIONS['4a'].moves['S']
+    # new('going to loc 4a')
+    # player.goto(loc)
+    # raise SystemExit
     #
     # new('going to loc 2')
     # player.goto('2')
@@ -994,7 +1006,8 @@ def test_state_changes():
     # new('climbing in 6a while player can walk')
     # player.can_walk = True
     # LOCATIONS['6a'].react('climb')
-
+    print('lantern being held:', OBJECTS['lantern'].being_held)
+    player.inventory.append('lantern')
     new('changing lantern lit to True')
     OBJECTS['lantern'].change_state('lit', True)
 
@@ -1074,7 +1087,7 @@ if __name__ == '__main__':
     player_data = actualize_data('PLAYER', setup.player_filename)
     player = Player(player_data)
 
-    # test_state_changes()
+    test_state_changes()
     # player.activate_func('take')
     gameplay()
     # player.inventory.append('egg')
@@ -1120,3 +1133,48 @@ if __name__ == '__main__':
 # player can't do that.
 # pass in argument to the player method based on the noun. If 'needs' a location,
 # check if the noun is
+
+# BELOW (COLLAPSED): old for word in command, if dir, if verb_result, etc...
+# for word in command:
+
+#     # ADD THAT IF THEY SAY ATTACK KEY AND THERE IS NO KEY, SAY THERE IS NO KEY
+
+#     if direction:
+#         # DEAL WITH THE DIR_TO_LOC FUNCTION
+#         direction = dir_to_loc(direction)
+#         for dir in direction:
+#             all_commands.append(['goto', dir])
+#
+#     elif verb_result:
+#
+#         verb, needs = verb_result
+#         verb_command = [verb]
+#         command.remove(word)
+#
+#         for inner_word in command:
+#             print('\n\ninner_word:', inner_word)
+#             meets_requirement = check_requirements(inner_word, needs)
+#             if meets_requirement:
+#                 print('requirement:', meets_requirement)
+#                 verb_command.append(meets_requirement)
+#                 command.remove(inner_word)  # if it meets the requirement, we add it to the verb command,
+#                 # but we don't want to accidentally use it again so we remove it
+#
+#         all_commands.append(verb_command)
+#
+#     elif location:
+#         all_commands.append(['goto', location])
+#     #
+#     # elif object:
+#     #     command.remove(word)
+#     #     for inner_word in command:
+#     #         verb_result = check_for_verb(inner_word)
+#     #         if verb_result:
+#     #             verb, needs = verb_result
+#     #             meets_requirement = check_requirements(object, needs)
+#     #             break  # once you find a verb, even if the object
+#     #             # use lantern to attack troll
+#
+# return all_commands
+
+# pick up, let go of
