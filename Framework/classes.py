@@ -3,6 +3,10 @@ from errors import *
 from nltk import pos_tag
 import random
 from Colors import *
+import omni_parser
+from itertools import groupby
+import time
+from operator import add, sub
 from itertools import zip_longest
 import fuckit
 # Add in documentation, that if you want to have a randomly chosen response, define your responses at the top of the document
@@ -186,10 +190,10 @@ def check_for_dir(word):
     return False
 
 
-def check_for_verb(word, command, index):
+def check_for_verb(word, original_command):
     """Checks if the word is a verb."""
 
-    def check_for_partial(word):
+    def is_partial(word, command):
         """Checks if the word is a partial verb, that is, a part of a multi-word verb.
         Have to do 2 things:
         1. check if the word is inside a multi-word verb.
@@ -198,47 +202,124 @@ def check_for_verb(word, command, index):
            that maps to the function drop().
         How do you ensure that it is not a one-word verb? By looking at the word after it. If the word after it is the next word
         in the multi-word verb, then you know the word is officially part of a multi-word verb, so you can "go ahead"
-        and return the appropriate tag."""
-        word_index = command.index(word)
-        try:
-            next_word = command[word_index+1]
-        except IndexError:  # if there is an index error, which would be raised if the word_index was the last index of
-            # the command, and adding 1 to it would be trying to access an index that is 1 greater than the indexes in the command
-            pass
+        and return True."""
+
+        def get_next_word(command, index):
+            """Sets the next word and the previous word of a given command. If there is no next or previous word, it
+            sets it to False.
+            :param command: The command, either the user's command or the multi-word command from which the function will retrieve
+            the next/previous word.
+            :param index: The index from which the function will add or subtract 1 to get the next/previous word.
+            """
+            indexes = [i for i, value in enumerate(command)]  # get all the indexes in the command to know if there is a next/previous word.
+            next_word = command[index + 1] if index + 1 in indexes else False
+            # print(f'The indexes inside the command of {command} ----- {indexes}')
+            # print(f'The next word: "{next}" ---- and the previous word: "{prev}"')
+            return next_word
+
+        for dictionary in COMMANDS['general_commands']:  # looping over all the dicts of verbs + needs + action sets
+            # The only commands I want are the ones that have spaces in them, which mean they are multi-word commands,
+            # the ones that the word is in -- because why would I want to look at a command in which the word is not even
+            # there?
+            multi_word_cmds = [cmd for cmd in dictionary['verbs'] if ' ' in cmd and word in cmd.split()]
+            # the cmd.split() above is very important, because I ran into an error like this before -- the user command was
+            # 'let go of lantern', the current word in the iteration was 'of', and the multi-word command in the loop iteration
+            # was 'throw off', and it passed the list comprehension conditions! -- How did this happen, you may ask? Because
+            # there was a space in 'throw off' and the word 'of' was in 'throw off' -- so I needed to add the .split() method
+            # to the command to make sure that the word is actually the same word as the word inside the multi-word command,
+            # not simply 'inside' it, lurking there like 'of' inside 'off'.
+            for cmd in multi_word_cmds:  # if the word is in the verbs list of current loop dict, now you have your verb
+                print('dealing with this multi-word command: ---- :', cmd)
+                for order in ('normal', 'reverse'):
+                    # REFACTOR THIS, MOVE THE .SPLIT() TO LIST COMP ABOVE [CMD.SPLIT() FOR CMD IN....]
+                    multiword_cmd = cmd.split()  # split the multi-word cmd by space
+                    if order == 'reverse':
+                        # Reversing everything allows me to just look at the next word (or next two words) without having to
+                        # essentially double the code by looking at the previous -- in 'reverse mode', the next word is really
+                        # the previous word.
+                        user_command = list(reversed(command))  # reversed returns in iterator, turn the iterator into a list
+                        multiword_cmd = list(reversed(multiword_cmd))
+                    else:
+                        user_command = command  # resetting this is necessary in the case of multiple loops through the
+                        # 'for cmd in multi_word_cmds' loop. After one loop in reverse mode, the command would have been
+                        # already reversed and if I did not set this again, the function would be looking at a reversed
+                        # list instead of looking at a non-reversed list like it should be. That's why I need to set the
+                        # user_command variable every time I go through the 'for order...' loop. The multiword_cmd var
+                        # doesn't need to be set in this else statement because it is always reset every time through the
+                        # 'for cmd in multi_word_cmds' loop.
+
+                    # Get the index of where the word is in the user command and get next word of user command
+                    word_index = user_command.index(word)
+                    next_word = get_next_word(user_command, word_index)
+
+                    # Get the index of where the word is in the multi-word command and get next word of multi-word command
+                    word_in_cmd_index = multiword_cmd.index(word)
+                    next_multiword = get_next_word(multiword_cmd, word_in_cmd_index)
+
+                    # Comparison time!
+                    if next_word and next_multiword:  # if there are words in the user command AFTER the main word and there are
+                        # next words in the multi-word command
+                        if next_word == next_multiword:  # if next word of user's command = next word of multiword command
+                            return True
+
+                    if check_for_item(next_word, 'OBJ'):  # if the next word is an object
+                        try:
+                            if user_command[word_index+2] == next_multiword:  # if the word after the object is the next word in the multi-word command
+                                return True
+                        except IndexError:
+                            pass
 
     # Checking if the word is in all the general commands
-    for dict in COMMANDS['general_commands']:  # looping over all the dicts of verbs + needs + action sets
-        if word in dict['verbs']:  # if the word is in the verbs list of current loop dict, now you have your verb
-            verb = dict['function']
 
-            return verb, 'FVB', None  # FVB = function verb, None is for below where I return used_indexes -- have to
-                                    # return the same amount of values every time
-        else:
-            for cmd in dict['verbs']:
-                if word in cmd and ' ' in cmd:  # if the word, e.g. 'pick', is in 'pick up', and if a space is in 'pick up'...
-                    cmd = cmd.split()[1:]
-                    passed_cmd = False
-                    used_indexes = []
-                    for rest, extra_word in zip(command[index:], cmd):  # for the rest of the words in the full command (passed in)
-                        used_indexes.append(index)
-                        index += 1
-                        if rest == extra_word:
-                            passed_cmd = True
-                        else:
-                            passed_cmd = False
-                            # ###put error messages here, u missed a word here, a word there, etc ####
-                            return False
-                        # if everything went well and the full multiple-word command is found (with the for extra_word in cmd loop)
-                    if passed_cmd:
-                        verb = dict['function']
-                        tagged = pos_tagger()
-                        return verb, 'FVB', used_indexes
+    if is_partial(word, original_command):
+        return word, 'PFVB'
 
-    # Checking if the word is a special command, like for an object, location, or actor
-    pass
-                    #return 'partial', cmd.split()[1:]
-                # return index + n
+    for dictionary in COMMANDS['general_commands']:  # looping over all the dicts of verbs + needs + action sets
+        if word in dictionary['verbs']:  # if the word is in the verbs list of current loop dict, now you have your verb
+            verb = dictionary['function']
+            return verb, 'FVB'
+        # if complete_match is True:
+        #     verb = dictionary['function']
+        #     return verb, 'FVB'
+        # elif complete_match is False:
+        #     return word, 'PFVB'
+        # else:
+        #     return False
+            # return_partial = False
+            # if word == cmd:
+            #     if is_partial(word, cmd):
+            #         return_partial = True
+            #
+            # elif word in cmd and ' ' in cmd:
+            #     if is_partial(word, cmd):  # if the word is not equal to the command, but is rather inside of it, meaning it is partial
+            #         return_partial = True
+            #
+            # if return_partial:
+            #     return word, 'PFVB'  # PFVB = partial function verb
+            # if word == cmd:
+            #     verb = dictionary['function']
+            #     return verb, 'FVB'  # FVB = function verb
     return False
+    # Checking if the word is a special command, like for an object, location, or actor
+
+
+def disambiguate(query, active_item, unprovided):
+    """Disambiguate a command.
+    :param query: i.e. '<verb> what?' or 'what about the <object>?
+    :param active_item: i.e. 'throw', 'troll', 'lantern'.
+    :param unprovided: i.e. 'verb', 'object', 'location', 'actor'."""
+    placeholder = '<' + unprovided + '>'
+    clarify = input(query.replace(placeholder, active_item) + ' ')
+
+    # articles = ['a', 'an', 'the']
+    # if unprovided == 'verb':
+    #     while not check_for_verb(clarify):
+    #         clarify = input('You must enterquery.replace(placeholder, active_item) + ' ')
+    #     player_input =
+    #     player_input = [word for word in player_input if word not in articles]
+    # commands, unparsed = pos_tagger(clarify)
+    # print('tagged:', commands)
+    # print('skeleton:', unparsed)
 
 
 def check_requirements(word, needs):  # OBSOLETE FUNCTION - REMOVE!!!!
@@ -266,8 +347,8 @@ def check_for_item(word, typ):
     elif typ == 'ACT':
         dictionary = ACTORS
 
-    for item in dictionary.values():  # loop over dict.values() which gives you the actual python objects of objects/locations.
-        references = item.references
+    for item in dictionary:  # loop over dictionary which gives you the actual python objects of objects/locations.
+        references = dictionary[item].references
         if word in references:
             item_reference = references[0]  # the first item in object/location's references is always official name of object
             if typ == 'OBJ':
@@ -333,7 +414,7 @@ def dir_to_loc(direction):
         return new_loc
 
 
-def pos_tagger(command, tagged=None, used_indexes=None):
+def pos_tagger(command):
     """Tags each of the words in the command and returns a list of tuples with appropriate tags."""
 
     def add(word, POS):
@@ -346,20 +427,21 @@ def pos_tagger(command, tagged=None, used_indexes=None):
         """Checks the word for its type and adds the appropriate tag."""
         word = command[index].lower()
         direction = check_for_dir(word)
-        verb, tag, used_indexes = check_for_verb(word, command, index+1)  # pass in word, the full command, and the current index + 1
+        verb = check_for_verb(word, intact_cmd)  # pass in word, the full command, and the current index + 1
         location = check_for_item(word, typ='LOC')
         object = check_for_item(word, typ='OBJ')
         actor = check_for_item(word, typ='ACT')
         if direction:
-            add(word, 'DIR')
+            for dir in direction:
+                add(dir, 'DIR')
         elif verb:
-            add(word, tag)  # tag can be 'FVB' for function verb or just 'VB' for an object/location/actor verb
+            add(word, verb[1])  # verb[1] is the tag: tag can be 'FVB' for function verb or just 'VB' for an object/location/actor verb
         elif location:
             add(word, 'LOC')
         elif object:
             add(word, 'OBJ')
         elif actor:
-            add(word, 'ACT')
+            add(actor, 'ACT')
         elif word in ('all', 'everything'):  # later maybe add 'every object/item'
             add(word, 'ALL')
         elif word in ('but', 'except', 'excluding'):
@@ -373,22 +455,101 @@ def pos_tagger(command, tagged=None, used_indexes=None):
             # the word in the 'but' check above might also be a preposition if it was run through the pos_add() function,
             # that's why it is above this elif statement
             add(word, 'PRP')
-        elif word in ('and', 'then', ','):
+        elif word in ('and', 'then', ',', ';', '.'):
             add(word, 'AND')
 
     skeleton = command
-    tagged = [] if tagged is None else tagged
-    if used_indexes is None:
-        indexes = range(len(command))
-    else:
-        indexes = [index for index in range(len(command)) if index not in used_indexes]
+    intact_cmd = command[:]  # the slice is necessary so that intact_cmd does not reference the same list as skeleton does,
+    # for if it does, then intact_cmd will change when skeleton changes
 
+    tagged = []
     # pass in the command.
     #
-    for i in indexes:
+    for i in range(len(command)):
         tag_word(i)
 
-    return tagged, skeleton
+    print('tagged after tagging:', tagged)
+
+    def _rearrange(tagged):
+        for dictionary in COMMANDS['general_commands']:
+            print('dictionary in COMMANDS:', dictionary)
+            multi_word_cmds = [cmd for cmd in dictionary['verbs'] if ' ' in cmd]
+            print('all multi_word_cmds:', multi_word_cmds)
+            for cmd in multi_word_cmds:
+                print('dealing with this multi-word command: ---- :', cmd)
+                cmd = cmd.split()
+                print('cmd after split:', cmd)
+                just_words = [word for word, tag in tagged]
+                try:
+                    starting_index = just_words.index(cmd[0])
+                    print('starting index:', starting_index)
+                except ValueError:
+                    print(f'\nvalue error, {cmd[0]} is not in just words: {just_words}\n\n')
+                    continue
+
+                match = True
+                zipped = zip(just_words[starting_index:], cmd)
+                indexes_to_remove = [index for index, words in enumerate(zipped)]
+                for usr_word, multi_word in zipped:
+                    # print(f'tagged word: {usr_word} --- multi command word: {multi_word}')
+                    if usr_word != multi_word:
+                        print(f"{usr_word} != {multi_word}")
+                        match = False
+                if match:
+                    print('its a match!!!')
+                    print('slice indexes, starting index:', indexes_to_remove[0], 'to index', indexes_to_remove[-1]+1)
+                    print('slice that is going to be removed:', tagged[indexes_to_remove[0]:indexes_to_remove[-1] + 1])
+                    tagged[indexes_to_remove[0]:indexes_to_remove[-1] + 1] = [(dictionary['function'], 'FVB')]
+                    return tagged
+
+    def rearrange(label, tagged):
+        """Rearranges multi-word command into single-word counterparts."""
+        for dictionary in COMMANDS['general_commands']:
+            multi_word_cmds = [cmd.split() for cmd in dictionary['verbs'] if ' ' in cmd]  # get all the multi-word commands
+            # in the current (in loop) command
+            for cmd in multi_word_cmds:
+                partials_in_usr_cmd = [word for word, tag in tagged if word in cmd if tag == 'PFVB']  # get all the partial
+                # words in the tagged user command. This will combine all the
+                if partials_in_usr_cmd == cmd:
+                    just_words = [word for word, tag in tagged]
+                    if label == 'PFVB(S)-ITEM':
+                        start = just_words.index(partials_in_usr_cmd[0])
+                        end = just_words.index(partials_in_usr_cmd[-1])
+                        tagged[start:end+1] = [('FVB', dictionary['function'])]
+                        return tagged
+                    elif label == 'PFVB(S)-ITEM-PFVB':
+                        start = just_words.index(partials_in_usr_cmd[0])
+                        before_item = just_words.index(partials_in_usr_cmd[-2])
+                        after_item = just_words.index(partials_in_usr_cmd[-1])
+                        len_before = len(tagged)
+                        tagged[start:before_item+1] = [('FVB', dictionary['function'])]
+                        difference = len_before - len(tagged)
+                        del tagged[after_item-difference]
+                        return tagged
+
+    sep = ('and', 'AND')
+    all_tagged = [list(group) for same_as_sep, group in groupby(tagged, sep.__eq__) if not same_as_sep]
+    print('all tagged after all groups:', all_tagged)
+    for command_set in all_tagged:
+        print('set:', command_set)
+
+    final_tagged = []
+
+    print('rearranging tagged')
+    for tagged_cmd in all_tagged:
+        new('NEW PARTIAL TAGSET CHECKER')
+        if 'PFVB' in str(tagged_cmd) or 'PVB' in str(tagged_cmd):
+            match_set = omni_parser.get_labels_and_matches(tagged_cmd, typ='P')
+            for label, match in match_set:  # typ can be anything other than 'NORMAL'
+                rearranged = rearrange(label, match)
+                print('rearranged:', rearranged)
+                final_tagged.append(rearranged)
+        else:
+            final_tagged.append(tagged_cmd)
+
+    print('\ntagged after rearranging:', final_tagged)
+
+    return final_tagged, skeleton
 # get_command(tagged)
 
 
@@ -826,11 +987,11 @@ class Player:
             OBJECTS[reference].reactor.react('command', typ)
 
     def throw(self, reference, actor=None):
+        """Throw an object -- either a simple throw at nothing or a throw at an actor."""
         if not actor:
             self.drop(reference, throw=True)
         else:
             self.attack(actor, reference)
-
 
     def give(self, actor, reference):
         """
@@ -952,7 +1113,6 @@ actualize_data('LOCATIONS', setup.loc_filename)
 actualize_data('OBJECTS', setup.obj_filename)
 actualize_data('ACTORS', setup.act_filename)
 
-#
 # class Character:
 #
 #     def __init__(self, health):
@@ -961,9 +1121,10 @@ actualize_data('ACTORS', setup.act_filename)
 #     def attack(self, other):
 #         raise NotImplementedError
 
+
 def new(action):
     """Prints a header and the action that is being tested."""
-    print('\n' + BOLD + BLACKWBG + '---NEW---' + END)
+    print('\n' + BOLD + BLACK_W_BG + '---NEW---' + END)
     print(BOLD + YELLOW + action.upper() + END)
 
 
@@ -1073,13 +1234,38 @@ def test_state_changes():
 # pass
 
 
+def condense(p_input):
+    """Condenses preliminary input. Removes predefined stop phrases and removes articles."""
+    import re
+    stop_phrases = ['go and', 'go forth and', 'go ahead and']
+    for phrase in stop_phrases:
+        if phrase in p_input:
+            p_input = p_input.replace(phrase, '')
+
+    delimiters = r'(; ?)|(, ?)|(\. ?)| a | an | the '  # the things in parentheses will be kept, those not in parentheses will be removed.
+    split = re.split(delimiters, p_input)  # split by all the delimiters and keep the delimiters
+    final = []
+    # re.split() will return None because you have more than one capturing groups, and all groups are included as a part
+    # of the re.split() result, so anything that doesn't match to all the groups will return None. So filter out the None
+    # and turn the iterator returned by filter into a list.
+    for word_set in list(filter(None, split)):
+        for word in word_set.split():  # split automatically strips the whitespaces
+            final.append(word)
+
+    return final
+
+
 def gameplay():
     """The gameplay function that will keep the game running till exit."""
+
+    # test_inputs = ['pick lantern up', 'throw away knife', 'pick up knife', 'let go of lantern', 'let go lantern']
     while True:
-        player_input = input('input command: ').split()
+        new('NEW PLAYER INPUT')
+        player_input = condense(input('enter command: '))
+        print('player input:', player_input)
         commands, unparsed = pos_tagger(player_input)
         print('tagged:', commands)
-        print('unparsed list:', unparsed)
+        print('skeleton:', unparsed)
 
 
 if __name__ == '__main__':
@@ -1087,9 +1273,11 @@ if __name__ == '__main__':
     player_data = actualize_data('PLAYER', setup.player_filename)
     player = Player(player_data)
 
-    test_state_changes()
+    # test_state_changes()
     # player.activate_func('take')
+
     gameplay()
+
     # player.inventory.append('egg')
     try:
         player.drop('egg')
@@ -1097,6 +1285,8 @@ if __name__ == '__main__':
         print('already holding object')
     except NotHoldingError:
         print('not holding object')
+
+
 # print(player.inventory)
 # gameplay()
 
