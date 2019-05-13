@@ -3,6 +3,19 @@ import nltk.tree
 import fuckit
 
 
+# Constants
+OBJ = 'OBJ'
+PRP = 'PRP'
+VB = 'VB'
+ACT = 'ACT'
+AND = 'AND'
+DIR = 'DIR'
+USE = 'USE'
+TO = 'TO'
+BUT = 'BUT'
+ALL = 'ALL'
+
+
 class Functions:
     def go(*args):
         for arg in args:
@@ -50,29 +63,7 @@ def exec_func_from_cmd(label, tagged_cmd):
         function(*args)  # unpack the list and send it as the arguments
 
 
-# Constants
-OBJ = 'OBJ'
-PRP = 'PRP'
-VB = 'VB'
-ACT = 'ACT'
-AND = 'AND'
-DIR = 'DIR'
-USE = 'USE'
-TO = 'TO'
-BUT = 'BUT'
-ALL = 'ALL'
-
-# tagged = [('take', VB), ('egg', OBJ), ('go', VB), ('north', 'DIR'), ('attack', VB), ('TROLL', 'ACT')]
-# tagged = [('lantern', OBJ), ('to', PRP), ('attack', VB), ('troll', ACT)]
-# tagged = [('attack', VB), ('troll', ACT), ('with', PRP), ('knife', OBJ)]
-# tagged = [('take', VB), ('lantern', OBJ), ('egg', OBJ), ('backpack', OBJ), ('knife', OBJ), ('go', VB), ('north', 'DIR'), ('south', 'DIR')]
-
-tagged1 = [('attack', VB), ('troll', ACT), ('with', PRP), ('lantern', OBJ)]
-tagged2 = [('open', VB), ('chest', OBJ), ('with', PRP), ('nut', OBJ)]
-tagged3 = [('use', USE), ('sword', OBJ), ('to', TO), ('attack', VB), ('troll', ACT)]
-tagged4 = [('use', USE), ('nut', OBJ), ('to', TO), ('open', VB), ('chest', OBJ)]
-
-short_phrases = r"""
+command_structures = r"""
                 USE-OBJ-TO-VB-ACT/OBJ: {<USE><OBJ><TO><VB><(ACT|OBJ)>}
                 VB-ACT/OBJ-PRP-OBJ: {<VB><(ACT|OBJ)><PRP><OBJ>}
                 VB-OBJ: {<VB><OBJ>+}
@@ -80,13 +71,27 @@ short_phrases = r"""
                 VB-ACT: {<VB><ACT>}
                 """
 
+partial_rearrangements = r"""
+                        PFVB(S)-ITEM-PFVB: {<PFVB>+<(ACT|OBJ|LOC)><PFVB>}
+                        PVB(S)-ITEM-PVB: {<PVB>+<(ACT|OBJ|LOC)><PVB>}
+                        PFVB(S)-ITEM: {<PFVB>+<(ACT|OBJ|LOC)>}
+                        PVB(S)-ITEM: {<PVB>+<(ACT|OBJ|LOC)>}
+                        """
 # make sure egg to take, make sure it fits with user allowed weight
 
-chunkParser = RegexpParser(short_phrases)  # create the parser with the grammar defined above
+partialParser = RegexpParser(partial_rearrangements)
 
-for tagged in (tagged1, tagged2, tagged3, tagged4):
+chunkParser = RegexpParser(command_structures)  # create the parser with the grammar defined above
+
+
+def get_labels_and_matches(tagged, typ='NORMAL'):
+    """Processes a command and sends it to the appropriate function."""
     print('\n\nNEW TAGSET')
-    chunked = chunkParser.parse(tagged)  # get the chunks, the matches that fit with the grammar
+    if typ == 'NORMAL':
+        chunked = chunkParser.parse(tagged)  # get the chunks, the matches that fit with the grammar
+    else:
+        chunked = partialParser.parse(tagged)
+
     responses = list(chunked.subtrees())[1:]  # turn the generator that is returned by chunked.subtrees() into a list and
     # get all the matches but the 0th (which is a Tree that contains ALL the subtrees -- the other list elements are the subtrees themselves)
 
@@ -96,18 +101,37 @@ for tagged in (tagged1, tagged2, tagged3, tagged4):
     print('responses matches:', matches)
     # print(response)
 
-
     # zip returns an iterable of python tuples where each element of the tuple will be from the lists passed into zip().
     # zip() is mainly used to combine data of two iterable elements together
-    for label, match in zip(labels, matches):
-        print(f"\nlabel: {label}")
-        print(f"match: {match}\n")
-        exec_func_from_cmd(label, match)
+    return zip(labels, matches)
 
-# print(chunked.draw())
+# for label, match in zip(labels, matches):
+#     print(f"\nlabel: {label}")
+#     print(f"match: {match}\n")
+#     if typ == 'partial':
+#         rearrange(label, match, all_commands)
+#     else:
+#         exec_func_from_cmd(label, match)
 
 
-structure = None
+if __name__ == '__main__':
+
+    tagged1 = [('attack', VB), ('troll', ACT), ('with', PRP), ('lantern', OBJ)]
+
+    tagged2 = [('open', VB), ('chest', OBJ), ('with', PRP), ('nut', OBJ)]
+    tagged3 = [('use', USE), ('sword', OBJ), ('to', TO), ('attack', VB), ('troll', ACT)]
+    tagged4 = [('use', USE), ('nut', OBJ), ('to', TO), ('open', VB), ('chest', OBJ)]
+
+    partial1 = [('let', 'PFVB'), ('go', 'PFVB'), ('of', 'PFVB'), ('lantern', 'OBJ')]
+    partial2 = [('pick', 'PFVB'), ('up', 'PFVB'), ('lantern', 'OBJ')]
+    partial3 = [('pick', 'PFVB'), ('lantern', 'OBJ'), ('up', 'PFVB')]
+
+    for tagged in tagged1, tagged2, tagged3, tagged4:
+        for label, match in get_labels_and_matches(tagged):
+            exec_func_from_cmd(label, match)
+        print('\n\nDONE 1!!')
+
+
 
 
 # chunkParser = RegexpParser(long_phrases)
