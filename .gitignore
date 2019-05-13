@@ -1,2 +1,15 @@
 
 .DS_Store
+__pycache__/Icon
+__pycache__/Icon
+test_script.py
+Icon
+Framework/Icon
+*.pyc
+*.pyc
+Framework/__pycache__/Icon
+*.pyc
+Data Models/Icon
+Data Models/.vscode/settings.json
+Data Models/.vscode/Icon
+__pycache__/Icon
