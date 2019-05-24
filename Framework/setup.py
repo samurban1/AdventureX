@@ -5,6 +5,36 @@ import warnings
 import pyaml  # just for pretty printing
 
 
+def get_synonyms():
+    """Gets the synonyms for game creator to add to data file."""
+    from nltk.corpus import stopwords, wordnet
+    words = input('enter words separated by comma: ').split(',')
+    pos = input('enter part of speech of word group, ADJ, ADJ_SAT, ADV, NOUN, VERB = a, s, r, n, v: ')
+    if pos == '':
+        pos = None
+    print('words:', words)
+    matches = []
+
+    for w in words:
+        synonyms = []
+        syns = wordnet.synsets(w.strip(), pos)
+        print('full syns:', syns)
+        for syn in syns:
+            for l in syn.lemmas():
+                synonyms.append(l.name())
+
+        print(f'\nSynonyms of {w}:', *list(set(synonyms)), sep=', ')
+        matches.append(set(synonyms))  # set removes the duplicate synonyms
+
+    print('\n\nPRINTING ALL MATCHES IN LOOP')
+    for match in matches:
+        print('final match x:', *list(match), sep=', ')
+    # print('final matches:', matches)
+
+    final = set.intersection(*matches)
+    print('final set:', *list(final), sep=', ')
+
+
 def get_data(filename):
     """
     Takes data from .yaml file and parses into a dictionary.
@@ -18,13 +48,18 @@ def get_data(filename):
 main_filename = '/Users/Sam/Documents/Shalhevet/CompSci/CompSci Work/Capstone/Github/AdventureX/Data Models/'
 loc_filename = main_filename + 'Location Data.yaml'
 obj_filename = main_filename + 'Objects Data.yaml'
+act_filename = main_filename + 'Actors Data.yaml'
 cmd_filename = main_filename + 'Commands.yaml'
 player_filename = main_filename + 'Player.yaml'
 randoms_filename = main_filename + 'Random Dicts.yaml'
 
 warnings.simplefilter("ignore", error.ReusedAnchorWarning)
 
+
 if __name__ == '__main__':
+
+    get_synonyms()
+    exit()
     location_data = get_data(loc_filename)
     objects_data = get_data(obj_filename)
 
