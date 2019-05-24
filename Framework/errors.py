@@ -1,23 +1,38 @@
 class ObjectError(Exception):
-    pass
+    def __init__(self, message):
+        self.message = message
 
 
 class AlreadyHoldingError(Exception):
-    pass
+    def __init__(self, message):
+        self.message = message
 
+
+class PlaceError(Exception):
+    pass
 
 class NotHoldingError(Exception):
     pass
 
 
+class StateChangeError(Exception):
+    pass
+
 class VerbError(Exception):
     pass
 
+
+class TakeError(Exception):
+    pass
 
 class AttackError(Exception):
     pass
 
 class GoToError(Exception):
+    pass
+
+
+class YamlFormatError(Exception):
     pass
 
 
