@@ -17,8 +17,8 @@
 #         1. A warning. It is a dictionary which contains 2 keys: 'warning' and 'yes'. The 'warning' key contains the warning message/question, and the 'yes' key which contains the location to go to if the user
 #            answers positively ('yes', 'y', 'ok') to the warning question. The program will keep the user in a loop asking the warning question until the user provides either a yes-type answer or a no-type answer.
 #         2. A word -- but not just any word -- this word refers to a dictionary defined with this word as the key name. This dictionary cotains a list of items, and is to be used when the game creator wants to
-#            be able to print a random item from this list when the player tries to go to this location. The most prevalent example of this is a game boundary message -- it would be boring to have just one
-#            message when the user hits a boundary, so the creator can define multiple messages and the program will pick one randomly from the list within the dictionary.
+#            be able to print a random item from this list when the player tries to go to this location. The most prevalent example of this is a game boundaries message -- it would be boring to have just one
+#            message when the user hits a boundaries, so the creator can define multiple messages and the program will pick one randomly from the list within the dictionary.
 #            These items can be any data type (boolean, string, etc.) -- but in the game's case, the list will most likely contain strings -- messages for the player.
 #         The MOVES dictionary can also contain a move_commands key, which holds a list of dictionaries, in a similar format as commands are declared in within the COMMANDS.yaml file: There is a 'words' key which contains a
 #         list of the words which activate the other key, the 'direction' key. This contains either N,E,S,W, or any of the other options laid out above. The reason there is a special move_commands dictionary
@@ -38,9 +38,9 @@ intro: You open your eyes and are blinded by the ray of light coming from above.
 boundaries:
   - Out of bounds, this location takes you nowhere.
   - You sure you want to fall off the game? Well, you can't. Going this direction takes you nowhere;
-    you have hit a game boundary.
+    you have hit a game boundaries.
   - One step further and you fall off the face of the flat earth; going this direction 
-    takes you nowhere. You have hit a game boundary.
+    takes you nowhere. You have hit a game boundaries.
 
 
 LOCATIONS:
@@ -65,7 +65,7 @@ LOCATIONS:
         {verbs: [exit, out, leave], direction: N},
         {verbs: [behind], direction: S}
       ]
-
+ 
   '1':
     name: inFrontHome
     visited: 0
@@ -76,7 +76,7 @@ LOCATIONS:
       short: You're in front (and outside) of your home trunk.
 
     MOVES:
-      N: &N boundary
+      N: &N boundaries
       E: &E '2'
       S: &S '0'
       W: &W '8'
@@ -106,8 +106,9 @@ LOCATIONS:
           narrative: You're at the edge of the cliff. A bridge is nearby.}
 
     MOVES:
-      N: &N boundary
-      E: &E '9'
+      N: &N boundaries
+      E: &E {warning: "Are you sure that you want to go off the edge of the cliff, down to the CRAGGY ROCKS AND RIVER 2000 FEET BELOW??",
+            yes: '9', no: Good choice. Suicide = bad. }
       S: &S '3'
       W: &W '1'
 
@@ -127,10 +128,10 @@ LOCATIONS:
       short: You are at the edge of the cliff, which leads down to the dangerous-looking
         whitewater river. A bridge is nearby.
 
-
     MOVES:
       N: &N '2'
-      E: &E '9'
+      E: &E {warning: "Are you sure that you want to go off the edge of the cliff, down to the CRAGGY ROCKS AND RIVER 2000 FEET BELOW??",
+            yes: '9', no: Good choice. Suicide = bad. }
       S: &S '4'
       W: &W '0'
 
@@ -170,16 +171,22 @@ LOCATIONS:
           narrative: The bridge stretches out in front of you, unguarded.}
 
     MOVES:
-      N: &N '9'
+      N: &N {warning: "Are you sure that you want to go off the edge of the cliff, down to the CRAGGY ROCKS AND RIVER 2000 FEET BELOW??",
+            yes: '9', no: Good choice. Suicide = bad. }
       E: &E 4b
       S: &S {warning: "You sure you want to jump over the bridge? You will most definitely crack your head on a rock below.",
             yes: 10d, no: Good choice. Suicide = bad. }
       W: &W '4'
 
     ACTORS: [troll]
-    COMMANDS: [
-        {verbs: [jump, suicide], action: [goto, S]}
-      ]
+    COMMANMDS:
+    - [jump, suicide, jump over bridge, kill myself]
+
+    REACTIONS:
+      jump:
+        reaction: Ookayyy, killing yourself on 1, 2, -----------
+        actions: [[goto, S]]
+
 
   4b:
     name: acrossBridge
@@ -200,9 +207,9 @@ LOCATIONS:
 
 
     MOVES:
-      N: &N boundary
-      E: &E boundary
-      S: &S boundary
+      N: &N boundaries
+      E: &E boundaries
+      S: &S boundaries
       W: &W 4a
 
   '5':
@@ -254,6 +261,7 @@ LOCATIONS:
 
     COMMANDS:
       - [climb, mount, go up, up, stairs, upwards]
+      - [test, pass, test]
 
     REACTIONS:
       climb:
@@ -271,7 +279,7 @@ LOCATIONS:
       N: &N 7a
       E: &E '6'
       S: &S '10'
-      W: &W boundary
+      W: &W boundaries
 
   '7':
     name: leftOfHome
@@ -306,7 +314,7 @@ LOCATIONS:
     MOVES:
       N: &N 8b
       E: &E 7a
-      S: &S boundary
+      S: &S boundaries
       W: &W 7a
     
   '8':
@@ -317,7 +325,7 @@ LOCATIONS:
         or any of the trees you are so used to seeing around you.
       short: You are near the clearing.
     MOVES:
-      N: &N boundary
+      N: &N boundaries
       E: &E '1'
       S: &S '7'
       W: &W 8a
@@ -326,13 +334,14 @@ LOCATIONS:
     name: clearing
     references: [clearing]
     visited: 0
+    CHILDREN: [[8b,]]
     NARRATIVES:
       long: You arrive in the clearing. A mysterious-looking silver egg lays in a small
         indentation in the ground in the middle of the clearing, and a brass lantern lies next to it.
       short: You're back in the clearing.
-    OBJECTS: [egg, lantern]
+    OBJECTS: [egg, lantern, backpack]
     MOVES:
-      N: &N boundary
+      N: &N boundaries
       E: &E '8'
       S: &S 7a
       W: &W 8b
@@ -375,8 +384,8 @@ LOCATIONS:
     MOVES:
       N: &N 6a
       E: &E 10a
-      S: &S boundary
-      W: &W boundary
+      S: &S boundaries
+      W: &W boundaries
 
   10a:
     name: moreTrees1
@@ -388,7 +397,7 @@ LOCATIONS:
     MOVES:
       N: &N '6'
       E: &E 10b
-      S: &S No go; this is the edge of the game.
+      S: &S boundaries
       W: &W '10'
   10b:
     name: moreTrees2
@@ -400,7 +409,7 @@ LOCATIONS:
     MOVES:
       N: &N '5'
       E: &E 10c
-      S: &S boundary
+      S: &S boundaries
       W: &W 10a
   10c:
     name: moreTrees3
@@ -412,7 +421,7 @@ LOCATIONS:
     MOVES:
       N: &N '4'
       E: &E 10d
-      S: &S boundary
+      S: &S boundaries
       W: &W 10b
 
   10d:

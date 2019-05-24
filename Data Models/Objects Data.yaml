@@ -14,76 +14,192 @@ OBJECTS:
     description: A brown linen durable backpack capable of holding up to 55 lbs.
     short_desc: a brown linen backpack
     active_location: '10'
+    
     inventory: []
     weight: 3
     damage: 5
+    locked: True
 
     reactions: {}
+  
+  # chest:
+  #   type: CONTAINER
+  #   references: [wooden, chest, lockbox]
+  #   description: A large wooden chest with gold wrappings on the edges.
+  #   short_desc: a wooden chest
+  #   active_location:
+
 
   knife:
     type: SIMPLE
     references: [knife, blade, dagger]
+    adjectives: [sharp, pointy, thin, 7-inch, long, engraved]
     description: An 7-inch silver blade sitting atop a matte-black handle, engraved with the head of a sheep.
     short_desc: a silver knife
     active_location: 4b
+    
     damage: 22
-    weight: 
+    weight: 10
 
     reactions: {}
 
   egg:
     type: SIMPLE
-    references: [egg, silver egg]
+    references: [egg]
+    adjectives: [silver, heavy, large, round]
     description: A large silver egg, weighing about 5 lbs.
     short_desc: a large silver egg
     active_location: 6a
+    
     damage: 0
     weight: 4
-
+    action_requirements:
+      take:
+      - {if: [[player, can_walk, False], [troll, guarding, True]],
+      failed: "You have to be able to walk and the troll cannot be guarding in order to take the egg.
+              One of these might be true, but not both."}
+      
     reactions:
       commands:
         throw:
           reaction: You throw the egg yay. IT breaks.
           actions: [[remove_from_game, egg]]
+        take: You pick up the egg and stumble a bit -- it's heavier than you thought.
+        drop: You drop the egg.
+        place:
+          backpack:
+            general:
+              reaction: The egg falls to the bottom of the backpack, which sounds deeper than you first imagined.
+              actions: [[die]]
+            exceptions:
+            - {if: [[player, can_walk, True]],
+              reaction: You can walk and the egg falls to bottom of backpack.}
+          chest:
 
+  
   lantern:
     type: COMPLEX
-    references: [lantern, light, brass]
+    references: [lantern, light]
+    adjectives: [brass, metal, heavy]
     description: A brass lantern with clouded glass doors and a curved black handle.
     short_desc: a brass lantern
     weight: 6
     damage: 13
     active_location: 6a
-    
+       
     states:
       lit: False
       light_guard: True
+
+    action_requirements:
+      on:
+      - {if: [[player, lantern, inventory, False]],
+      stop_msg: You can't turn on a lantern that you don't have.}
+      off:
+      - {if: [[player, lantern, inventory, False]],
+      stop_msg: You can't turn off a lantern that you don't have.}
+    state_change_requirements:
+      lit:
+        True:  # change state of lit to True
+        # this has to be above the other condition
+        - {if: [[lantern, lit, True]],
+        stop_msg: The lantern is already on.}
+        - {if: [[troll, guarding, True], [player, active_location, 4a]],
+          stop_msg: The troll's power stops the light from turning on.}
+        False:
+        - {if: [[lantern, lit, False]],
+        stop_msg: The lantern is already off.}
+     
     # state_change_exceptions:
 
     # messages:
     reactions:
       state_changes:
         lit:
-          general:
-            True: The light turns on, but it doesn't help - it's already light here.
-            False: The light turns off, but so what? It's already light here.
-          exceptions: 
-            - {if: [[player, active_location, 6a]],
-              reaction: {True: 'The light turns on, and everything becomes more clear.
-                                You see a stone staircase rise up in front of you.',
-                        False: 'The light flickers off, and it becomes harder to see.'}}
-
-            - {if: [[troll, guarding, True], [player, active_location, 4a]],
-              reaction: {True: The troll's power stops the light from turning on.}}
+          True:
+            general: The light turns on, but it doesn't help - it's already light here.
+            exceptions: 
+              - {if: [[player, active_location, 6a]],
+                reaction: 'The light turns on, and everything becomes more clear.
+                          You see a stone staircase rise up in front of you.'}
+          False:
+            general: The light turns off, but so what? It's already light here.
+            exceptions:
+              - {if: [[player, active_location, 6a]],
+                reaction: 'The light flickers off, and it becomes harder to see.',}
 
       commands:
         take: You pick up the lantern and brush off the dust covering the stained 
             glass sides. It looks like it has been here for a while.
         throw:
-          general: You throw the lantern and it falls with a clatter on the ground a few feet away.
-          exceptions:
-            - {if: [[troll, guarding, True], [player, active_location, 4a]],  
-            # if throw at troll is not specifically called, and player just throws in in the vicinity of the troll.
-            # if throw at troll is called, then it won't map to the throw reaction, it will map to the attack reaction
-              reaction: "You throw the lantern and the troll runs away, scared."}  
-        #- attack: *unattackable
+          at_nothing:
+            general: You throw the lantern and it falls with a clatter on the ground a few feet away.
+            exceptions:
+              - {if: [[troll, guarding, True], [player, active_location, 4a]],  
+              # if throw at troll is not specifically called, and player just throws in in the vicinity of the troll.
+              # if throw at troll is called, then it won't map to the throw reaction, it will map to the attack reaction
+                reaction: "Might be better to throw it at something rather than empty air."}  
+          #- attack: *unattackable
+          troll: The lantern flies from your hand, hitting the troll square on the nose.
+        
+        place:
+          backpack: You put the lantern in the backpack. Thud.
+
+
+
+COMMANDS:
+  # NOTE: YOU CANNOT PUT A GENERAL KEY IF THERE ARE NO EXCEPTIONS.
+  # IF YOU WANT TO PUT AN ACTION, YOU MUST ADD A REACTION & ACTION SET.
+  # IF YOU JUST WANT AN ACTION WITH NO REACTION, WRITE null UNDER THE REACTION KEY.
+  # BUT THE REACTION KEY MMMMMMUUUUUUSSSSTTTTTTT EXIST.
+  state_changes:
+    a:  # reaction and actions
+      reaction: asdfasdf
+      actions: [[],[]]
+    b: asdfsdfsdfsdf  # just a string, simple reaction.
+    c: # general -> simple string, and exceptions, with reaction and actions
+      general: asdfasdf
+      exceptions:
+      - {if: [[],[]],
+      reaction: asdfasdf,
+      actions: [[],[]]}
+    d: # general -> with reaction and actions, and exceptions, with reaction and actions
+      general:
+        reaction: asdfasdf
+        actions: [[],[]]
+      exceptions:
+      - {if: [[],[]],
+      reaction: asdfasdf,
+      actions: [[],[]]}
+    f: All of these above are able to be put within sub_keys, so for example,
+    g:
+      True:
+        general: asdfgdhfd
+        exceptions: 
+          - {if: [[],[]],
+            reaction: asdfasdf}
+          - {if: [[],[]],
+            reaction: asdasdfasdf}
+      False:
+        general: asdlifja;oriuwjaglksdm
+        exceptions:
+          - {if: [[],[]],
+            reaction: qwertyuiop}
+    h:
+      True:
+        general:
+          reaction: asdfasdfa
+          actions: [[],[]]
+        exceptions: 
+          - {if: [[],[]],
+            reaction: asdfasdf,
+            actions: [[],[]]}
+          - {if: [[],[]],
+            reaction: asdasdfasdf}  # this one has no actions
+      False:
+        general:
+          reaction: l3i3uwFEAJNSKDM
+        exceptions:
+          - {if: [[],[]],
+            reaction: qwertyuiop}
+

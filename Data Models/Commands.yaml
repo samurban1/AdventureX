@@ -1,42 +1,41 @@
 # 'needs' can be a single thing, or it can be an either/or, which is denoted by a forward slash.
 # if it is multiple items, it means that 
 COMMANDS:
-  general_commands: [
+  builtin_commands: [
+    {verbs: [throw, hurl, toss, project, cast, pitch, chuck], function: throw},
     {verbs: [describe, depict, analyze, canvass, analyse, look, see, canvas, examine, study, probe], function: describe},
-    {verbs: [take, get, pick up, retrieve], function: take},
-    {verbs: [drop, remove, throw away, throw off, shed, release, let go of, unhand, unload, put down, eject, lose, let go, relinquish], function: drop}, 
-    {verbs: [throw, hurl, toss, project, cast, pitch, chuck, ], function: throw},
+    {verbs: [take, get, grasp, clasp, gather, gather up, lay hold of, acquire, pick up, retrieve, grab, take up, take hold of, seize, nab, cop, collect, gather up, lift up, get hold of, ], function: take},
+    {verbs: [drop, remove, remove from myself, throw down, throw away, throw off, shed, release, let go of, unhand, unload, put down, eject, lose, let go, relinquish], function: drop},
     # use lantern
-    {verbs: [attack, assail, assault, aggress, snipe strike], function: attack},
-    {verbs: [go, travel, move, locomote, journey], function: goto},
+    {verbs: [attack, assail, assault, aggress, snipe, strike], function: attack},
+    {verbs: [go, walk, travel, move, locomote, journey], function: goto},
+    {verbs: [couch, set, position, place, put, lay, station, implant, plant, imbed, embed, deposit, stick, situate, wedge, lodge], function: place},
+    {verbs: [turn, face, turn towards, rotate, whirl, twirl, swivel, pivot], function: turn}
     # {verbs: [utilize, employ, apply, use, utilise], function: use}
   ]
-  
-  custom_commands:
-    forOBJECTS:
-      lantern: [
-        {verbs: [on, turn on, switch on, rouse, ], actions: [lantern, change_state, lit, True]},
-        {verbs: [off, turn off, cut, switch off], actions: [lantern, change_state, lit, False]},
+
+  custom_commands: [
+        {valid_items: [lantern], verbs: [on, turn on, switch on, rouse], actions: [item, change_state, lit, True]},
+        {valid_items: [lantern], verbs: [off, turn off, cut, switch off], actions: [item, change_state, lit, False]},
       ]
-    forLOCATIONS: null
-    forACTORS: null
+
   function_maps: [
     {verbs: [hit, strike, punch], map: [attack, <actor>, hand]}
   ]
 
   unprovided:
-    object: <verb> what?
-    verb: What about the <object>?
-    location: <verb> where?
-    with: What do you want to <verb> the <object> with?
+    object: <verb> what? 
+    verb: What about the <object>? 
+    location: <verb> where? 
+    # with: What do you want to <verb> the <object> with?
   invalid: You can't do that, sorry dude.
 
   warnings:
-    yes: ["yes", "yea", "yeah", "OK", "okey dokey", "by all means", 
+    yes: ["yes", "yea", "yeah", fine, sure, "OK", "okey dokey", "by all means", 
       "affirmative", "aye aye", "roger", "10-4", "uh-huh", "righto", 
       "very well", "yup", "yuppers", "right on", "ja", "surely", "amen", 
       "fo shizzle", "totally", "sure", "yessir"]
-    no: ["no", "Nah", "Nope", "No way", "Sorry", "Not now", "Certainly not", 
+    no: ["no", "Nah", not really, I don't think so, "Nope", "No way", "Sorry", "Not now", "Certainly not", 
       "By no means", "I shall not", "Not likely", "No thanks!", 
       "I think not.", "Unfortunately not", "I’m slammed", "Not possible", 
       "Not this time", "Not for me, thanks", "It’s not my thing", 
