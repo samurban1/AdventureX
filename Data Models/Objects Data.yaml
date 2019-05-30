@@ -15,12 +15,18 @@ OBJECTS:
     short_desc: a brown linen backpack
     active_location: '10'
     
-    inventory: []
+    inventory: [lantern, egg]
+    carrying_capacity: 40
     weight: 3
     damage: 5
     locked: True
 
     reactions: {}
+
+    action_requirements:
+      take_from:
+      - {if: [[backpack, locked, True]],
+      stop_msg: "You try to unzip the backpack but feel a force pushing back. I guess you'll have to figure out some way to open this thing."}
   
   # chest:
   #   type: CONTAINER
@@ -29,6 +35,29 @@ OBJECTS:
   #   short_desc: a wooden chest
   #   active_location:
 
+  pillar:
+    type: SIMPLE
+    references: [pillar, pedestal]
+    adjectives: [tall, stone, ancient]
+    description: A pillar
+    short_desc: a pillar
+    active_location: 4b
+    
+    damage: 120
+    weight: 100
+    fixed: True
+
+    reactions: {}
+
+    action_requirements:
+      take:
+      - {if: [[pillar, fixed, True]],
+      stop_msg: "I'm sorry, did you really think you could pick up a pillar? It weighs more than your mom."}
+
+
+  # door:
+  #   type: COMPLEX
+  #   references: [door, threshold, doorway, portal, opening, entrance,]
 
   knife:
     type: SIMPLE
@@ -41,7 +70,9 @@ OBJECTS:
     damage: 22
     weight: 10
 
-    reactions: {}
+    reactions:
+      commands:
+        take: You brandish the mighty teeny knife.
 
   egg:
     type: SIMPLE
@@ -55,22 +86,24 @@ OBJECTS:
     weight: 4
     action_requirements:
       take:
-      - {if: [[player, can_walk, False], [troll, guarding, True]],
-      failed: "You have to be able to walk and the troll cannot be guarding in order to take the egg.
+      - {if: [[player, can_walk, True], [troll, guarding, False]],
+      stop_msg: "You have to not be able to walk and the troll cannot be guarding in order to take the egg.
               One of these might be true, but not both."}
-      
+
     reactions:
       commands:
         throw:
           reaction: You throw the egg yay. IT breaks.
           actions: [[remove_from_game, egg]]
-        take: You pick up the egg and stumble a bit -- it's heavier than you thought.
+        take:
+          from_nothing: You pick up the egg and stumble a bit -- it's heavier than you thought.
+          backpack: You pull out the egg from the backpack.
         drop: You drop the egg.
         place:
           backpack:
             general:
               reaction: The egg falls to the bottom of the backpack, which sounds deeper than you first imagined.
-              actions: [[die]]
+              # actions: [[die]]
             exceptions:
             - {if: [[player, can_walk, True]],
               reaction: You can walk and the egg falls to bottom of backpack.}
@@ -83,20 +116,20 @@ OBJECTS:
     adjectives: [brass, metal, heavy]
     description: A brass lantern with clouded glass doors and a curved black handle.
     short_desc: a brass lantern
+    fixed: False
     weight: 6
     damage: 13
     active_location: 6a
        
     states:
       lit: False
-      light_guard: True
 
     action_requirements:
       on:
-      - {if: [[player, lantern, inventory, False]],
+      - {if: [[lantern, backpack, inventory, False]],
       stop_msg: You can't turn on a lantern that you don't have.}
       off:
-      - {if: [[player, lantern, inventory, False]],
+      - {if: [[lantern, player, inventory, False]],
       stop_msg: You can't turn off a lantern that you don't have.}
     state_change_requirements:
       lit:
@@ -129,7 +162,9 @@ OBJECTS:
                 reaction: 'The light flickers off, and it becomes harder to see.',}
 
       commands:
-        take: You pick up the lantern and brush off the dust covering the stained 
+        take:
+          backpack: You pull the lantern out of the backpack.
+          from_nothing: You pick up the lantern and brush off the dust covering the stained 
             glass sides. It looks like it has been here for a while.
         throw:
           at_nothing:
@@ -141,6 +176,7 @@ OBJECTS:
                 reaction: "Might be better to throw it at something rather than empty air."}  
           #- attack: *unattackable
           troll: The lantern flies from your hand, hitting the troll square on the nose.
+        drop: You drop it. Boom.
         
         place:
           backpack: You put the lantern in the backpack. Thud.

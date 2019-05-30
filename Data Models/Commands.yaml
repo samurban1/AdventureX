@@ -4,18 +4,18 @@ COMMANDS:
   builtin_commands: [
     {verbs: [throw, hurl, toss, project, cast, pitch, chuck], function: throw},
     {verbs: [describe, depict, analyze, canvass, analyse, look, see, canvas, examine, study, probe], function: describe},
-    {verbs: [take, get, grasp, clasp, gather, gather up, lay hold of, acquire, pick up, retrieve, grab, take up, take hold of, seize, nab, cop, collect, gather up, lift up, get hold of, ], function: take},
+    {verbs: [take, get, grasp, extract, clasp, gather, gather up, lay hold of, acquire, pick up, retrieve, grab, take up, take hold of, seize, nab, cop, collect, gather up, lift up, get hold of], function: take},
     {verbs: [drop, remove, remove from myself, throw down, throw away, throw off, shed, release, let go of, unhand, unload, put down, eject, lose, let go, relinquish], function: drop},
     # use lantern
     {verbs: [attack, assail, assault, aggress, snipe, strike], function: attack},
     {verbs: [go, walk, travel, move, locomote, journey], function: goto},
-    {verbs: [couch, set, position, place, put, lay, station, implant, plant, imbed, embed, deposit, stick, situate, wedge, lodge], function: place},
-    {verbs: [turn, face, turn towards, rotate, whirl, twirl, swivel, pivot], function: turn}
+    {verbs: [place, couch, set, position, put, lay, station, implant, plant, imbed, embed, deposit, stick, situate, wedge, lodge], function: place},
+    {verbs: [face, turn towards, rotate, whirl, twirl, swivel, pivot], function: rotate}
     # {verbs: [utilize, employ, apply, use, utilise], function: use}
   ]
 
   custom_commands: [
-        {valid_items: [lantern], verbs: [on, turn on, switch on, rouse], actions: [item, change_state, lit, True]},
+        {valid_items: [lantern], verbs: [on, turn on, switch on, rouse], actions: [lantern, change_state, lit, True]},
         {valid_items: [lantern], verbs: [off, turn off, cut, switch off], actions: [item, change_state, lit, False]},
       ]
 
@@ -28,7 +28,6 @@ COMMANDS:
     verb: What about the <object>? 
     location: <verb> where? 
     # with: What do you want to <verb> the <object> with?
-  invalid: You can't do that, sorry dude.
 
   warnings:
     yes: ["yes", "yea", "yeah", fine, sure, "OK", "okey dokey", "by all means", 
@@ -43,3 +42,18 @@ COMMANDS:
       "Maybe another time", "I’m not interested", "If only I could!", 
       "If only it worked", "I’ll need to bow out", "I’m afraid I can’t", 
       "I have something else", "I don’t think I want to", "Thanks, but no thanks"]
+
+  invalid_input_responses: ["That's not a sentence I recognize.",
+                            'I am sorry, but I don’t follow what you are saying.',
+                            'I’m afraid it is not clear what you saying.',
+                            'That went right over my head.',
+                            "I don't understand.",
+                            'I’m not very smart, can you clarify what you mean by that?',
+                            'I did not understand that in the least bit. Try again, mon amour.',
+                            "For the love of God, say something that makes sense."]
+  incoherent_input_responses: ["That command was just a bit incoherent. Clarify, please.",
+                               "I’m sorry, I’m a little slow today. Can you rephrase that?",
+                               'Would you mind clarifying what you said?',
+                               "Your command is unclear.",
+                               "I cannot judge just exactly what you mean by that."
+                               ]

@@ -11,7 +11,6 @@ ACTORS:
     active_location: 4a
     damage: 17
     health: 100
-    attack: True
     can_talk: False
 
     # states are attributes specific to this actor

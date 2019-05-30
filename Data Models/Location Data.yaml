@@ -57,13 +57,13 @@ LOCATIONS:
         you to fit inside. Nearby is the sound of rushing water, to your right, or east, is the edge of a cliff.
       short: You are back in the tree trunk.
     MOVES:
-      N: &N '1'
-      E: &E '3'
-      S: &S '5'
-      W: &W '7'
+      N: '1'
+      E: '3'
+      S: '5'
+      W: '7'
       move_commands: [
-        {verbs: [exit, out, leave], direction: N},
-        {verbs: [behind], direction: S}
+        {verbs: [exit, out, leave], direction: 'N'},
+        {verbs: [behind], direction: 'S'}
       ]
  
   '1':
@@ -76,13 +76,13 @@ LOCATIONS:
       short: You're in front (and outside) of your home trunk.
 
     MOVES:
-      N: &N boundaries
-      E: &E '2'
-      S: &S '0'
-      W: &W '8'
+      N: boundaries
+      E: '2'
+      S: '0'
+      W: '8'
       move_commands: [
-        {verbs: [exit, out, leave], direction: N},
-        {verbs: [behind], direction: S}
+        {verbs: [exit, out, leave], direction: 'N'},
+        {verbs: [behind], direction: 'S'}
         ]
 
   '2':
@@ -106,11 +106,11 @@ LOCATIONS:
           narrative: You're at the edge of the cliff. A bridge is nearby.}
 
     MOVES:
-      N: &N boundaries
-      E: &E {warning: "Are you sure that you want to go off the edge of the cliff, down to the CRAGGY ROCKS AND RIVER 2000 FEET BELOW??",
+      N: boundaries
+      E: {warning: "Are you sure that you want to go off the edge of the cliff, down to the CRAGGY ROCKS AND RIVER 2000 FEET BELOW??",
             yes: '9', no: Good choice. Suicide = bad. }
-      S: &S '3'
-      W: &W '1'
+      S: '3'
+      W: '1'
 
   '3':
     name: cliffEdge1
@@ -129,11 +129,11 @@ LOCATIONS:
         whitewater river. A bridge is nearby.
 
     MOVES:
-      N: &N '2'
-      E: &E {warning: "Are you sure that you want to go off the edge of the cliff, down to the CRAGGY ROCKS AND RIVER 2000 FEET BELOW??",
+      N: '2'
+      E: {warning: "Are you sure that you want to go off the edge of the cliff, down to the CRAGGY ROCKS AND RIVER 2000 FEET BELOW??",
             yes: '9', no: Good choice. Suicide = bad. }
-      S: &S '4'
-      W: &W '0'
+      S: '4'
+      W: '0'
 
   '4':
     name: toBridge
@@ -144,10 +144,10 @@ LOCATIONS:
       short: You're near the bridge to the east.
 
     MOVES:
-      N: &N '3'
-      E: &E 4a
-      S: &S 10c
-      W: &W '5'
+      N: '3'
+      E: 4a
+      S: 10c
+      W: '5'
 
   4a:
     name: bridge
@@ -171,12 +171,12 @@ LOCATIONS:
           narrative: The bridge stretches out in front of you, unguarded.}
 
     MOVES:
-      N: &N {warning: "Are you sure that you want to go off the edge of the cliff, down to the CRAGGY ROCKS AND RIVER 2000 FEET BELOW??",
+      N: {warning: "Are you sure that you want to go off the edge of the cliff, down to the CRAGGY ROCKS AND RIVER 2000 FEET BELOW??",
             yes: '9', no: Good choice. Suicide = bad. }
-      E: &E 4b
-      S: &S {warning: "You sure you want to jump over the bridge? You will most definitely crack your head on a rock below.",
+      E: 4b
+      S: {warning: "You sure you want to jump over the bridge? You will most definitely crack your head on a rock below.",
             yes: 10d, no: Good choice. Suicide = bad. }
-      W: &W '4'
+      W: '4'
 
     ACTORS: [troll]
     COMMANMDS:
@@ -191,7 +191,7 @@ LOCATIONS:
   4b:
     name: acrossBridge
     visited: 0
-    can_enter: 
+    can_enter: [[troll, guarding, False]]
     NARRATIVES:
       long:
         general: You are on the other side of the bridge, yay. To be continued.
@@ -207,10 +207,10 @@ LOCATIONS:
 
 
     MOVES:
-      N: &N boundaries
-      E: &E boundaries
-      S: &S boundaries
-      W: &W 4a
+      N: boundaries
+      E: boundaries
+      S: boundaries
+      W: 4a
 
   '5':
     name: behindHome
@@ -221,10 +221,10 @@ LOCATIONS:
       short: You are behind your home trunk, and to the east is the bridge.
 
     MOVES:
-      N: &N '0'
-      E: &E '4'
-      S: &S 10b
-      W: &W '6'
+      N: '0'
+      E: '4'
+      S: 10b
+      W: '6'
 
   '6':
     name: leftBehindHome
@@ -234,10 +234,10 @@ LOCATIONS:
       long: Just more trees. You are surrounded.
 
     MOVES:
-      N: &N '7'
-      E: &E '5'
-      S: &S 10a
-      W: &W 6a
+      N: '7'
+      E: '5'
+      S: 10a
+      W: 6a
 
   6a:
     name: staircase
@@ -276,10 +276,10 @@ LOCATIONS:
           actions: [[player, goto, '@6b']]}
         
     MOVES:
-      N: &N 7a
-      E: &E '6'
-      S: &S '10'
-      W: &W boundaries
+      N: 7a
+      E: '6'
+      S: '10'
+      W: boundaries
 
   '7':
     name: leftOfHome
@@ -288,10 +288,10 @@ LOCATIONS:
       long: You see your home trunk to the east, and trees everywhere else you look.
         But you see something unexpected for a forest, nearby.
     MOVES:
-      N: &N '8'
-      E: &E '0'
-      S: &S '6'
-      W: &W 7a
+      N: '8'
+      E: '0'
+      S: '6'
+      W: 7a
 
   7a:
     name: toClearing0
@@ -301,10 +301,10 @@ LOCATIONS:
         vast forest of trees.
       short: You're back near the clearing, which is straight ahead of you.
     MOVES:
-      N: &N 8a
-      E: &E '7'
-      S: &S 6a
-      W: &W 7b
+      N: 8a
+      E: '7'
+      S: 6a
+      W: 7b
   
   7b:
     name: toClearing1
@@ -312,10 +312,10 @@ LOCATIONS:
     NARRATIVES:
       long: You see something in the ground in a clearing among the trees ahead of you.
     MOVES:
-      N: &N 8b
-      E: &E 7a
-      S: &S boundaries
-      W: &W 7a
+      N: 8b
+      E: 7a
+      S: boundaries
+      W: 7a
     
   '8':
     name: toClearing2
@@ -325,10 +325,10 @@ LOCATIONS:
         or any of the trees you are so used to seeing around you.
       short: You are near the clearing.
     MOVES:
-      N: &N boundaries
-      E: &E '1'
-      S: &S '7'
-      W: &W 8a
+      N: boundaries
+      E: '1'
+      S: '7'
+      W: 8a
 
   8a:
     name: clearing
@@ -336,15 +336,15 @@ LOCATIONS:
     visited: 0
     CHILDREN: [[8b,]]
     NARRATIVES:
-      long: You arrive in the clearing. A mysterious-looking silver egg lays in a small
-        indentation in the ground in the middle of the clearing, and a brass lantern lies next to it.
+      long: You arrive in the clearing. An old-looking brown burlap backpack lies on the floor, and a glimmering knife
+        lays next to it.
       short: You're back in the clearing.
-    OBJECTS: [egg, lantern, backpack]
+    OBJECTS: [backpack, knife]
     MOVES:
-      N: &N boundaries
-      E: &E '8'
-      S: &S 7a
-      W: &W 8b
+      N: boundaries
+      E: '8'
+      S: 7a
+      W: 8b
 
   8b:
     name: midClearing
@@ -353,10 +353,10 @@ LOCATIONS:
       long: You are in the middle of the clearing with the depression in the ground.
     OBJECTS: [egg, lantern]
     MOVES:
-      N: &N null
-      E: &E 8a
-      S: &S null
-      W: &W null
+      N: null
+      E: 8a
+      S: null
+      W: null
 
   '9':
     name: deathFall
@@ -365,14 +365,16 @@ LOCATIONS:
       player:
         health: 0
     NARRATIVES:
-      long: You fall 2000 feet and hit your head on a boulder at the bottom. You die.
+      long:
+        narrative: You fall 2000 feet and hit your head on a boulder at the bottom. You die.
+        actions: [[die]]
       short:
 
     MOVES:
-      N: &N null
-      E: &E null
-      S: &S null
-      W: &W null
+      N: null
+      E: null
+      S: null
+      W: null
   
   '10':
     name: moreTrees0
@@ -382,10 +384,10 @@ LOCATIONS:
       long: Just more trees. You are surrounded.
 
     MOVES:
-      N: &N 6a
-      E: &E 10a
-      S: &S boundaries
-      W: &W boundaries
+      N: 6a
+      E: 10a
+      S: boundaries
+      W: boundaries
 
   10a:
     name: moreTrees1
@@ -395,10 +397,10 @@ LOCATIONS:
       long: Just more trees. You are surrounded.
 
     MOVES:
-      N: &N '6'
-      E: &E 10b
-      S: &S boundaries
-      W: &W '10'
+      N: '6'
+      E: 10b
+      S: boundaries
+      W: '10'
   10b:
     name: moreTrees2
     references: [forest, trees, woods]
@@ -407,10 +409,10 @@ LOCATIONS:
       long: Just more trees. You are surrounded.
 
     MOVES:
-      N: &N '5'
-      E: &E 10c
-      S: &S boundaries
-      W: &W 10a
+      N: '5'
+      E: 10c
+      S: boundaries
+      W: 10a
   10c:
     name: moreTrees3
     references: [forest, trees, woods]
@@ -419,10 +421,10 @@ LOCATIONS:
       long: Just more trees. You are surrounded.
 
     MOVES:
-      N: &N '4'
-      E: &E 10d
-      S: &S boundaries
-      W: &W 10b
+      N: '4'
+      E: 10d
+      S: boundaries
+      W: 10b
 
   10d:
     name: deathFall2
@@ -433,10 +435,10 @@ LOCATIONS:
         actions: [[die]]
 
     MOVES:
-      N: &N null
-      E: &E null
-      S: &S null
-      W: &W null
+      N: null
+      E: null
+      S: null
+      W: null
 
 
 ####### LEVEL 2 #######
@@ -450,8 +452,8 @@ LOCATIONS:
     NARRATIVES:
       long: You have reached the top of the stairs. Yay.
     MOVES:
-      N: &N '9'
-      E: &E 4b
-      S: &S {warning: "You sure you want to jump over the bridge? You will most definitely crack your head on a rock below.",
+      N: '9'
+      E: 4b
+      S: {warning: "You sure you want to jump over the bridge? You will most definitely crack your head on a rock below.",
             yes: 10d, no: Smart.}
-      W: &W '4'
+      W: '4'
