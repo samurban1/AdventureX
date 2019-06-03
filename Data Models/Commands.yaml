@@ -5,7 +5,7 @@ COMMANDS:
     {verbs: [throw, hurl, toss, project, cast, pitch, chuck], function: throw},
     {verbs: [describe, depict, analyze, canvass, analyse, look, see, canvas, examine, study, probe], function: describe},
     {verbs: [take, get, grasp, extract, clasp, gather, gather up, lay hold of, acquire, pick up, retrieve, grab, take up, take hold of, seize, nab, cop, collect, gather up, lift up, get hold of], function: take},
-    {verbs: [drop, remove, remove from myself, throw down, throw away, throw off, shed, release, let go of, unhand, unload, put down, eject, lose, let go, relinquish], function: drop},
+    {verbs: [drop, remove, put down, remove from myself, put away, throw down, throw away, throw off, shed, release, let go of, unhand, unload, put down, eject, lose, let go, relinquish], function: drop},
     # use lantern
     {verbs: [attack, assail, assault, aggress, snipe, strike], function: attack},
     {verbs: [go, walk, travel, move, locomote, journey], function: goto},
@@ -15,8 +15,9 @@ COMMANDS:
   ]
 
   custom_commands: [
-        {valid_items: [lantern], verbs: [on, turn on, switch on, rouse], actions: [lantern, change_state, lit, True]},
-        {valid_items: [lantern], verbs: [off, turn off, cut, switch off], actions: [item, change_state, lit, False]},
+        {valid_items: [lantern], optional_argument: [knife], verbs: [on, turn on, switch on, rouse], actions: [[item, change_state, lit, True]]},
+        {valid_items: [lantern], verbs: [off, turn off, cut, switch off], actions: [[item, change_state, lit, False]]},
+        {valid_items: [door], optional_argument: [key], verbs: [open, unlock], actions: [[item, change_state, locked, False]]}
       ]
 
   function_maps: [

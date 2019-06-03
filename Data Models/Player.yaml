@@ -1,21 +1,14 @@
 PLAYER:
   active_location: '0'
   orientation: 'N'
-  inventory: [hand, leg]
+  inventory: []
   health: 100
+  carrying_capacity: 30
+  object_capacity: 3
+
 
   states:
     can_walk: False
-
-  OBJECTS:
-    hand:
-      type: SIMPLE
-      references: [arms, hands, arm, hand, fist, fists]
-      damage: 3
-
-    leg:
-      references: [leg, legs, foot, feet]
-      damage: 5
 
   reactions:
     state_changes:
@@ -24,10 +17,11 @@ PLAYER:
           You can walk now!!! Your feet can now take you places, places that you before would not have been able to
           reach.
 
-      health:
-        general: Player's health has decreased.
-        exceptions:
-        - {if: [[player, health, 'range(85,93)']],
-          reaction: 'Careful, you want to save your health for when you really need it.'}
-        - {if: [[player, health, 'range(75,85']],
-          reaction: "Damn, you really don't care about losing life. It's your life, dude!"}
+    # numerical_state_changes:
+    #   health:
+    #     general: Player's health has decreased.
+    #     exceptions:
+    #     - {if: [[player, health, 'range(85,93)']],
+    #       reaction: 'Careful, you want to save your health for when you really need it.'}
+    #     - {if: [[player, health, 'range(75,85']],
+    #       reaction: "Damn, you really don't care about losing life. It's your life, dude!"}

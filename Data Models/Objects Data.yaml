@@ -19,7 +19,7 @@ OBJECTS:
     carrying_capacity: 40
     weight: 3
     damage: 5
-    locked: True
+    # locked: True
 
     reactions: {}
 
