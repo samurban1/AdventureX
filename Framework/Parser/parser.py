@@ -1,23 +1,24 @@
-from nltk.corpus import stopwords
+from nltk.corpus import stopwords, wordnet
 from nltk import word_tokenize, pos_tag
 # from nltk.stem import wordnet, WordNetLemmatizer
 
+#
+# def add_the(tokenized):
+#     """Adds a 'the' before a noun to make the POS tagger more accurate."""
+#     print('tokenized before the:', tokenized, type(tokenized))
+#     objects = ''
+#     for references in [item.references for item in OBJECTS.values()]:
+#         objects += ' '.join(references) + ' '
+#     print(objects)
+#     for word in tokenized:
+#         if word in objects:
+#             if tokenized[tokenized.index(word)-1] != 'the':  # if there is not already a "the" before the word
+#                 first = tokenized[:tokenized.index(word)]
+#                 last = tokenized[tokenized.index(word):]
+#                 tokenized = first + ['the'] + last
+#     # print('tokenized after the:', tokenized)
+#     return tokenized
 
-def add_the(tokenized):
-    """Adds a 'the' before a noun to make the POS tagger more accurate."""
-    print('tokenized before the:', tokenized, type(tokenized))
-    objects = ''
-    for references in [item.references for item in OBJECTS.values()]:
-        objects += ' '.join(references) + ' '
-    print(objects)
-    for word in tokenized:
-        if word in objects:
-            if tokenized[tokenized.index(word)-1] != 'the':  # if there is not already a "the" before the word
-                first = tokenized[:tokenized.index(word)]
-                last = tokenized[tokenized.index(word):]
-                tokenized = first + ['the'] + last
-    # print('tokenized after the:', tokenized)
-    return tokenized
 
 def process_content(text):
     """Tokenizes text, adds 'the' in front of nouns to make POS tagger more accurate, and then spits out
@@ -43,6 +44,9 @@ needed = ['in']
 
 while True:
     ex_text = input('Input commmand: ')
+    if 'sword' in ex_text:
+        which_sword = ex_text.split()[0] + input('Which sword?').replace('one', 'sword')
+        print('final reference:', which_sword)
     if 'exit' in ex_text:
         break
     process_content(ex_text)

@@ -1,7 +1,6 @@
 
 .DS_Store
-__pycache__/Icon
-__pycache__/Icon
+__pycache__/
 test_script.py
 Icon
 Framework/Icon
@@ -9,6 +8,7 @@ Framework/Icon
 *.pyc
 Framework/__pycache__/Icon
 *.pyc
+*.pdf
 Data Models/Icon
 Data Models/.vscode/settings.json
 Data Models/.vscode/Icon
@@ -18,4 +18,7 @@ Framework/__pycache__/errors.cpython-37.pyc
 Framework/__pycache__/Icon
 Icon
 Data Models/.vscode/Icon
-__pycache__/Icon
+Tutorial/
+.vscode/
+WakaTime1
+Mom Hawaii/
