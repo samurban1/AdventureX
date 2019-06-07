@@ -1,0 +1,119 @@
+OBJECTS:
+  # CONTAINER, SIMPLE, COMPLEX
+  pen:
+    type: SIMPLE
+    references: []
+    adjectives: []
+    description: description
+    short_desc: short description
+    active_location:
+
+    damage: 
+    weight:
+
+    action_requirements:
+      take:
+      - {if: [[item, attribute, value]],
+      stop_msg:
+      }
+
+      place:
+        container:  # reference to a container
+        - {if: [[item, attribute, value]],
+        stop_msg:
+        }
+
+    reactions:
+      commands:
+        take:
+        drop:
+          reaction:
+          actions: [[]]
+        throw:
+          at_nothing:
+            general:
+            exceptions:
+            - {if: [[]],
+            reaction:
+            }
+
+  backpack:
+    type: CONTAINER
+    references: []
+    description: description
+    short_desc: short description
+    active_location: '0'
+    
+    inventory: []
+    carrying_capacity: 40
+    weight: 3
+    damage: 5
+    locked: True
+    fixed: True
+
+    reactions: {}
+
+    action_requirements:
+      take_from:
+      - {if: [[item, attribute, value]],
+      stop_msg: }
+
+
+  stapler:
+      type: COMPLEX
+      references: []
+      adjectives: []
+      description: description
+      short_desc: short description
+      active_location: '0'
+
+      damage: 5
+      weight: .7
+
+      states:
+        empty: False
+        broken: True
+
+      action_requirements:
+        take:
+        - {if: [[]],
+        stop_msg:
+        }
+
+        place:
+          backpack:
+          - {if: [[]],
+          stop_msg:
+          }
+      state_change_requirements:
+        empty:
+          True:
+          - {if: [[]],
+          stop_msg:
+          }
+          False:
+
+      reactions:
+        state_changes:
+          empty:
+            True:
+            False:
+              general:
+              exceptions:
+              - {if: [[]],
+              reaction: ,
+              actions: [[]]
+              }
+
+        commands:
+          take:
+          drop:
+            reaction:
+            actions: [[]]
+          throw:
+            at_nothing:
+              general:
+              exceptions:
+              - {if: [[]],
+              reaction:
+              }

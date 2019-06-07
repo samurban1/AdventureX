@@ -1,0 +1,16 @@
+PLAYER:
+  active_location: '0'
+  orientation: 'N'
+  inventory: []
+  health: 100
+  carrying_capacity: 30
+  object_capacity: 3
+
+
+  states:
+    attribute: value
+
+  reactions:
+    state_changes:
+      attribute:
+        value: reaction, blah blah blah
