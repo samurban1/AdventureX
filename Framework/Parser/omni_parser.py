@@ -1,5 +1,20 @@
 from nltk import RegexpParser
-from CommandGrammar import *
+import CommandGrammar
+
+
+def turn_to_sentence(words, starting_msg):
+    """Print all current objects in the location."""
+    message = starting_msg
+    for i in range(len(words)):
+        # obj = OBJECTS[objects[i]]  # objects[i], for example, is 'egg'. so OBJECTS['egg']
+        if i == len(words) - 1 and len(words) > 1:  # if it's the last word to add to the list AND if there is more than one word
+            message += f' and ' if len(words) == 2 else f'and '  # add an 'and', e.g. x, y, and z -- space before 'and' based on conditional
+        # objects_here += obj.short_description
+        message += words[i]
+        if len(words) > 2:
+            message += ', '
+    message = message.strip(', ')
+    return message
 
 
 def incoherent(function, arguments, tags, label):
@@ -10,9 +25,11 @@ def incoherent(function, arguments, tags, label):
     if label in ('FVB-ITEM-OUT-OF/FROM-CONT', 'FVB-OBJ-FROM-CONT'):
         if function != 'take':
             return f"You can't {function} something out of something."
-    elif label == 'USE-OBJ-TO-FVB-ACT/OBJ':
+    elif label in ('USE-OBJ-TO-FVB-ACT/OBJ', 'FVB-ACT/OBJ-WITH-OBJ'):
         if function in act_on_obj_functions:
-            return f"You can {function} things all by yourself. You can't use something to {function} something."
+            obj = arguments[0] if label == 'USE-OBJ-TO-FVB-ACT/OBJ' else arguments[-1]
+            add_text = 'in something' if function == 'place' else ''
+            return f"You don't need an {obj} to {function} something {add_text}. You can do it all by yourself."
     elif label == 'FVB-OBJ/ALL-IN/FROM-CONT':
         if function in ('throw', 'drop'):
             return f"If you want to put an object into something, then say so."
@@ -55,12 +72,13 @@ def cmd_with_unprovided(label, match, full_cmd):
     """Checks if player just ended a one-word command, like 'lantern' or 'go' and returns appropriate response."""
     act_on_obj_functions = ['take', 'throw', 'drop', 'describe', 'place']
     word = match[0][0]
+    tags = [tag for word, tag in full_cmd]
     if len(full_cmd) == 1:
         if label == 'FVB':
             if word == 'goto':
                 return 'go', 0,  "Go where?"
             elif word == 'turn':
-                return 'turn', 0, "Please specify a direction in which to turn. Re-enter full command."
+                return 'turn', 0, "Please specify a direction in which to turn. No need to re-enter full command."
             else:
                 return word, 0, f"{word} what?"
         elif label == 'OBJ/ACT':
@@ -73,6 +91,10 @@ def cmd_with_unprovided(label, match, full_cmd):
                 return "That is neither a place nor a direction."
             elif word == 'turn':
                 return "That is not a direction (that you can turn in)."
+        elif label == 'PLACE-OBJ':
+            if word == 'place' and 'CONT' not in tags:
+                objects = [word for word, tag in match[1:]]
+                return f"{turn_to_sentence(objects, 'Put the ')} in what?"
 
 
 # this needs MAJOR MAJOR MAJOR fixing. I mean doing. It needs doing. It's not done. Simple. Do it.
@@ -90,10 +112,19 @@ def exec_custom_func_from_cmd(label, tagged_cmd):
 
     if label in ('VB-ITEM', 'ITEM-VB'):
         return custom_function, args, None
-    elif label == 'FVB-ACT/OBJ-WITH-OBJ':
-        return custom_function, args[0], args[1:]
+    elif label in ('VB-ACT/OBJ-WITH-OBJ', 'ACT/OBJ-VB-WITH-OBJ'):
+        actor_or_obj, with_object = args[0], args[-1]
+        return custom_function, [actor_or_obj], with_object  # actor_or_obj must be in list for command_prompt to treat it
+        # as if multiple objects are being acted on, then looping over each object in the list. If not put in list, it will
+        # loop over the letters in the object name, and we DON'T want that.
     elif label == 'USE-OBJ-TO-VB-ACT/OBJ':
-        pass
+        actor_or_obj, with_object = args[-1], args[1]
+        return custom_function, [actor_or_obj], with_object
+
+
+def exec_loc_verb_from_cmd(tagged_cmd):
+    command = tagged_cmd[0][0]
+    return command
 
 
 def exec_func_from_cmd(label, tagged_cmd):
@@ -102,14 +133,15 @@ def exec_func_from_cmd(label, tagged_cmd):
     # if above if statement fails
     first_label = tagged_cmd[0][1]
     print('label matched:', label) if debug else None
-    if first_label != 'DIR':
+    if first_label not in ('DIR', 'LOC'):
         index = 0 if first_label == 'FVB' else 3  # the else is for a USE-0BJ-TO-VB-ACT command
         method = tagged_cmd[index][0]  # get the [insert index here] element of the list of tuples, then get the first element of the tuple,
                                     # which is the verb, which is the function name
         tagged_cmd.pop(index)
     args, tags = zip(*tagged_cmd)  # unpack zip object
+    args = list(args)
 
-    if first_label != 'DIR':  # the only chunk patterns with first label as DIR are 'DIR' and 'DIR-NUM', and there is no
+    if first_label not in ('DIR', 'LOC'):  # the only chunk patterns with first label as DIR are 'DIR' and 'DIR-NUM', and there is no
         # possibility of incoherency with those two patterns.
         print(f"calling incoherent() on {method, args, tags, label}") if debug else None
         incoherent_cmd = incoherent(method, args, tags, label)
@@ -124,7 +156,13 @@ def exec_func_from_cmd(label, tagged_cmd):
     elif 'FVB-OBJ/ALL' in label and 'CONT' in label:  # the and 'CONT' in label is just a precaution, not necessary because
         # there are only a few chunks with 'FVB-OBJ/ALL' in them, all of them which I would like to apply this function to.
         if 'ALL' in tags:
-            return method, ('ALL-IN-CONT', args[-1])  # args[-1] is the container
+            if 'BUT' in tags:
+                container_index = tags.index('CONT')
+                container = args[container_index]
+                starting_but = tags.index('BUT') + 1
+                return method, ('ALL-IN-CONT-BUT', container, *args[starting_but:])
+            else:
+                return method, ('ALL-IN-CONT', args[-1])  # args[-1] is the container
         elif 'OBJ' in tags or 'CONT' in tags:  # could use else, but as the Zen of Python says, 'Explicit is better than implicit.'
             # if the tag is FVB-OBJ/ALL-OUT-....', then the objects stop right before the 'OUT', but if the tag is
             # FVB-OBJ/ALL-IN-..., then the objects stop right before the 'IN'. Same goes for 'FROM'.
@@ -168,25 +206,16 @@ def exec_func_from_cmd(label, tagged_cmd):
     elif label == 'FVB-ITEM':
         return method, args
 
-    elif label == 'FVB-TO-DIR':
+    elif label in ('FVB-TO-DIR', 'FVB-TO-LOC'):
         return method, args[1:]
 
     elif label in ('DIR-NUM', 'FVB-DIR-NUM'):
         return 'goto', ((args[0]),)*int(args[1])  # multiply whatever DIR is by NUM. this multiplication creates a tuple
         # with multiple DIRs, e.g. ('N', 'N', 'N', 'N')
 
-    elif label == 'DIR':
+    elif label in ('DIR', 'LOC'):
         method = 'goto'
         return method, args
-
-
-# make sure egg to take, make sure it fits with user allowed weight
-
-partialParser = RegexpParser(partial_rearrangements)
-
-chunkParser = RegexpParser(command_structures)  # create the parser with the grammar defined above
-
-errorParser = RegexpParser(specific_errors)
 
 
 def get_labels_and_matches(tagged, typ='NORMAL'):
@@ -195,7 +224,7 @@ def get_labels_and_matches(tagged, typ='NORMAL'):
         chunked = chunkParser.parse(tagged)  # get the chunks, the matches that fit with the grammar
     elif typ == 'ERRORS':
         chunked = errorParser.parse(tagged)
-    else:
+    elif typ == 'PARTIAL':
         chunked = partialParser.parse(tagged)
 
     responses = list(chunked.subtrees())[1:]  # turn the generator that is returned by chunked.subtrees() into a list and
@@ -211,29 +240,11 @@ def get_labels_and_matches(tagged, typ='NORMAL'):
     return zip(labels, matches)
 
 
+partialParser = RegexpParser(CommandGrammar.partial_rearrangements)
+
+chunkParser = RegexpParser(CommandGrammar.command_structures)  # create the parser with the grammar defined above
+
+errorParser = RegexpParser(CommandGrammar.specific_errors)
+
 debug = False
 
-if __name__ == '__main__':
-
-    tagged1 = [('attack', FVB), ('troll', ACT), ('with', WITH), ('lantern', OBJ)]
-    tagged2 = [('open', FVB), ('chest', OBJ), ('with', WITH), ('nut', OBJ)]
-    # tagged3 = [('use', USE), ('sword', OBJ), ('to', TO), ('attack', VB), ('troll', ACT)]
-    # tagged4 = [('use', USE), ('nut', OBJ), ('to', TO), ('open', VB), ('chest', OBJ)]
-    #
-    # partial1 = [('let', 'PFVB'), ('go', 'PFVB'), ('of', 'PFVB'), ('lantern', 'OBJ')]
-    # partial2 = [('pick', 'PFVB'), ('up', 'PFVB'), ('lantern', 'OBJ')]
-    # partial3 = [('pick', 'PFVB'), ('lantern', 'OBJ'), ('up', 'PFVB')]
-
-    for tagged in tagged1, tagged2:  #, tagged3, tagged4:
-        for label, match in get_labels_and_matches(tagged):
-            print('label:', label)
-            print('match:', match)
-            exec_func_from_cmd(label, match)
-        print('\n\nDONE 1!!')
-
-
-# chunkParser = RegexpParser(long_phrases)
-#
-# chunked = chunkParser.parse(tagged)
-#
-# print(chunked.draw())
